@@ -9,3 +9,12 @@ router.get("/health", (req, res) => {
 });
 
 module.exports = router;
+
+const auth = require("../middleware/auth");
+
+router.get("/protected", auth, (req, res) => {
+  res.json({
+    message: "Access granted",
+    user: req.user
+  });
+});
