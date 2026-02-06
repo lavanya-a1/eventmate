@@ -80,3 +80,33 @@ router.delete("/:id", auth, async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+const role = require("../middleware/role");
+
+router.post(
+  "/",
+  auth,
+  role(["organizer", "admin"]),
+  async (req, res) => {
+    try {
+      const event = await Event.create({
+        ...req.body,
+        createdBy: req.user.id
+      });
+      res.status(201).json(event);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+
+router.delete(
+  "/:id",
+  auth,
+  role(["admin"]),
+  async (req, res) => {
+    await Event.findByIdAndDelete(req.params.id);
+    res.json({ message: "Event deleted by admin" });
+  }
+);
