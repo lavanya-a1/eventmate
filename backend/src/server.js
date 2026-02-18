@@ -29,3 +29,5 @@ app.use("/api/auth", authRoutes);
 
 const eventRoutes = require("./routes/event.routes");
 app.use("/api/events", eventRoutes);
+
+app.use("/api/admin", require("./routes/admin.routes"));
