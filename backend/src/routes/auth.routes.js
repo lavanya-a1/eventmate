@@ -2,8 +2,12 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
+const authController = require("../controllers/authController");
 
 const router = express.Router();
+
+router.post("/register", authController.register);
+router.post("/login", authController.login);
 
 router.post("/register", async (req, res) => {
   try {
