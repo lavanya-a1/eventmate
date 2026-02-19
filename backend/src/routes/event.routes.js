@@ -209,3 +209,7 @@ router.post(
   }
 );
 
+// Only admin can create event
+router.post("/", auth, role("admin"), async (req, res) => {
+  res.json({ message: "Event created" });
+});
