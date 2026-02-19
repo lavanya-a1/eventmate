@@ -1,27 +1,29 @@
 const express = require("express");
 const Event = require("../models/Event");
 const auth = require("../middleware/auth");
+const role = require("../middleware/role");
+const protect = require("../middleware/auth");
 
 const router = express.Router();
 
-// Create Event (Protected)
-router.post("/", auth, async (req, res) => {
+// @route   POST /api/events
+// @desc    Create an event
+// @access  Protected (Organizer or Admin)
+router.post("/", auth, role(["organizer", "admin"]), async (req, res) => {
   try {
     const event = await Event.create({
       ...req.body,
-      createdBy: req.user.id
+      organizer: req.user.id
     });
-
     res.status(201).json(event);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
-module.exports = router;
-
-// Get all events
-// GET EVENTS WITH PAGINATION + SEARCH + FILTERS
+// @route   GET /api/events
+// @desc    Get all events with pagination, search, and filters
+// @access  Public
 router.get("/", async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -33,28 +35,20 @@ router.get("/", async (req, res) => {
 
     const query = {};
 
-    // 🔎 Search
     if (search) {
       query.$text = { $search: search };
     }
-
-    // 📂 Category filter
     if (category) {
       query.category = category;
     }
-
-    // 📍 Location filter
     if (location) {
       query.location = location;
     }
-
-    // 📅 Upcoming events filter
     if (upcoming === "true") {
       query.date = { $gte: new Date() };
     }
 
     const total = await Event.countDocuments(query);
-
     const events = await Event.find(query)
       .populate("organizer", "name email")
       .sort({ date: 1 })
@@ -72,9 +66,9 @@ router.get("/", async (req, res) => {
   }
 });
 
-module.exports = router;
-
-
+// @route   PUT /api/events/:id
+// @desc    Update an event
+// @access  Protected (Owner or Admin)
 router.put("/:id", auth, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -83,8 +77,9 @@ router.put("/:id", auth, async (req, res) => {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    if (event.createdBy.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Not authorized" });
+    // Check ownership or admin role
+    if (event.organizer.toString() !== req.user.id && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized to update this event" });
     }
 
     Object.assign(event, req.body);
@@ -95,6 +90,10 @@ router.put("/:id", auth, async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+// @route   DELETE /api/events/:id
+// @desc    Delete an event
+// @access  Protected (Owner or Admin)
 router.delete("/:id", auth, async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -103,8 +102,9 @@ router.delete("/:id", auth, async (req, res) => {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    if (event.createdBy.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Not authorized" });
+    // Check ownership or admin role
+    if (event.organizer.toString() !== req.user.id && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized to delete this event" });
     }
 
     await event.deleteOne();
@@ -114,32 +114,76 @@ router.delete("/:id", auth, async (req, res) => {
   }
 });
 
-const role = require("../middleware/role");
+module.exports = router;
+
+
+router.post("/:eventId/book", protect, async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.eventId);
+
+    if (!event) {
+      res.status(404);
+      throw new Error("Event not found");
+    }
+
+    // ❌ Prevent booking past events
+    if (event.date < new Date()) {
+      res.status(400);
+      throw new Error("Cannot book past events");
+    }
+
+    // ❌ Prevent duplicate booking
+    const existingBooking = await Booking.findOne({
+      user: req.user.id,
+      event: event._id,
+    });
+
+    if (existingBooking) {
+      res.status(400);
+      throw new Error("You already booked this event");
+    }
+
+    // ❌ Prevent overbooking
+    if (event.bookedSeats >= event.capacity) {
+      res.status(400);
+      throw new Error("Event is fully booked");
+    }
+
+    // ✅ Create booking
+    await Booking.create({
+      user: req.user.id,
+      event: event._id,
+    });
+
+    // ✅ Increase booked seats
+    event.bookedSeats += 1;
+    await event.save();
+
+    res.status(201).json({
+      message: "Event booked successfully",
+    });
+
+  } catch (error) {
+    res.status(500);
+    throw new Error(error.message);
+  }
+});
+
+const { body } = require("express-validator");
+const validate = require("../middleware/validate");
 
 router.post(
   "/",
-  auth,
-  role(["organizer", "admin"]),
+  protect,
+  [
+    body("title").notEmpty().withMessage("Title is required"),
+    body("date").isISO8601().withMessage("Valid date required"),
+    body("capacity")
+      .isInt({ min: 1 })
+      .withMessage("Capacity must be at least 1"),
+  ],
+  validate,
   async (req, res) => {
-    try {
-      const event = await Event.create({
-        ...req.body,
-        createdBy: req.user.id
-      });
-      res.status(201).json(event);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  }
-);
-
-
-router.delete(
-  "/:id",
-  auth,
-  role(["admin"]),
-  async (req, res) => {
-    await Event.findByIdAndDelete(req.params.id);
-    res.json({ message: "Event deleted by admin" });
+    // your existing create event logic
   }
 );

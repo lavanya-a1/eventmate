@@ -7,7 +7,11 @@ const eventSchema = new mongoose.Schema(
     location: String,
     date: { type: Date, required: true },
     category: String,
-    capacity: Number,
+    capacity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
     organizer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -17,6 +21,10 @@ const eventSchema = new mongoose.Schema(
 );
 
 // Add text index for search
-eventSchema.index({ title: "text", description: "text", location: "text" });
+eventSchema.index({
+  title: "text",
+  description: "text",
+  location: "text",
+});
 
 module.exports = mongoose.model("Event", eventSchema);

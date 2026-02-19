@@ -32,8 +32,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-module.exports = router;
-
 const jwt = require("jsonwebtoken");
 
 router.post("/login", async (req, res) => {
@@ -50,6 +48,7 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    console.log("DEBUG: Signing token for user:", user.email, "with role:", user.role);
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
@@ -58,7 +57,13 @@ router.post("/login", async (req, res) => {
 
     res.json({
       message: "Login successful",
-      token
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
 
   } catch (error) {
@@ -112,3 +117,5 @@ router.get("/:id", async (req, res) => {
 
   res.json(event);
 });
+
+module.exports = router;
