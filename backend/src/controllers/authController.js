@@ -19,10 +19,10 @@ exports.register = async (req, res, next) => {
     next(err);
   }
 };
+const asyncHandler = require("../utils/asyncHandler");
 
-exports.login = async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
+exports.login = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
 
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "User not found" });
@@ -37,7 +37,6 @@ exports.login = async (req, res, next) => {
     );
 
     res.json({ token });
-  } catch (err) {
-    next(err);
-  }
-};
+});
+
+
