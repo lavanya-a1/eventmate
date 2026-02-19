@@ -26,45 +26,66 @@ router.post("/", auth, role(["organizer", "admin"]), async (req, res) => {
 // @access  Public
 router.get("/", async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const search = req.query.search || "";
-    const category = req.query.category || "";
-    const location = req.query.location || "";
-    const upcoming = req.query.upcoming;
+    const {
+      page = 1,
+      limit = 5,
+      search,
+      category,
+      location,
+      startDate,
+      endDate,
+      sortBy = "date",
+      order = "asc",
+    } = req.query;
 
     const query = {};
 
+    // 🔎 Text Search
     if (search) {
       query.$text = { $search: search };
     }
+
+    // 📂 Category
     if (category) {
       query.category = category;
     }
+
+    // 📍 Location
     if (location) {
       query.location = location;
     }
-    if (upcoming === "true") {
-      query.date = { $gte: new Date() };
+
+    // 📅 Date Range
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
     }
 
+    // 📊 Sorting
+    const sortOptions = {};
+    sortOptions[sortBy] = order === "desc" ? -1 : 1;
+
     const total = await Event.countDocuments(query);
+
     const events = await Event.find(query)
       .populate("organizer", "name email")
-      .sort({ date: 1 })
+      .sort(sortOptions)
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(Number(limit));
 
     res.json({
       total,
-      page,
+      page: Number(page),
       pages: Math.ceil(total / limit),
       events,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500);
+    throw new Error(error.message);
   }
 });
+
 
 // @route   PUT /api/events/:id
 // @desc    Update an event
@@ -187,3 +208,4 @@ router.post(
     // your existing create event logic
   }
 );
+
