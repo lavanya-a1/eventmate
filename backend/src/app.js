@@ -1,4 +1,5 @@
 require("dotenv").config();   // ✅ FIRST
+const helmet = require("helmet");
 
 const connectDB = require("./config/db");
 connectDB();
@@ -8,6 +9,7 @@ const cors = require("cors");
 
 const app = express();
 
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
@@ -35,3 +37,14 @@ app.use("/api/admin", require("./routes/admin.routes"));
 const errorHandler = require("./middleware/errorHandler");
 
 app.use(errorHandler);
+
+const rateLimit = require("express-rate-limit");
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per window
+  message: {
+    success: false,
+    message: "Too many requests, please try again later.",
+  },
+});
+app.use(limiter);
