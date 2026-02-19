@@ -3,6 +3,9 @@ const Event = require("../models/Event");
 const auth = require("../middleware/auth");
 const role = require("../middleware/role");
 const protect = require("../middleware/auth");
+const validate = require("../middleware/validate");
+const { createEventSchema } = require("../validations/event.validation");
+const eventController = require("../controllers/eventController"); 
 
 const router = express.Router();
 
@@ -191,7 +194,6 @@ router.post("/:eventId/book", protect, async (req, res) => {
 });
 
 const { body } = require("express-validator");
-const validate = require("../middleware/validate");
 
 router.post(
   "/",
@@ -210,8 +212,14 @@ router.post(
 );
 
 // Only admin can create event
-router.post("/", auth, role("admin"), async (req, res) => {
-  res.json({ message: "Event created" });
-});
+router.post(
+  "/",
+  auth,
+  role("admin"),
+  validate(createEventSchema),
+  eventController.createEvent
+);
 
 router.get("/", eventController.getAllEvents);
+
+
