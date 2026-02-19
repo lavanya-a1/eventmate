@@ -213,3 +213,5 @@ router.post(
 router.post("/", auth, role("admin"), async (req, res) => {
   res.json({ message: "Event created" });
 });
+
+router.get("/", eventController.getAllEvents);
