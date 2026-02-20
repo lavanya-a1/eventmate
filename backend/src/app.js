@@ -1,5 +1,6 @@
 require("dotenv").config();   // ✅ FIRST
 const helmet = require("helmet");
+const morgan = require("morgan");
 
 const connectDB = require("./config/db");
 connectDB();
@@ -9,6 +10,7 @@ const cors = require("cors");
 
 const app = express();
 
+app.use(morgan("dev"));
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
