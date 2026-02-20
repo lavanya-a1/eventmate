@@ -1,36 +1,149 @@
 const asyncHandler = require("../utils/asyncHandler");
 const Event = require("../models/Event");
 
+/**
+ * @desc    Get all events with pagination, search, and filters
+ * @route   GET /api/events
+ * @access  Public
+ */
 exports.getAllEvents = asyncHandler(async (req, res) => {
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 5;
-  const skip = (page - 1) * limit;
+  const {
+    page = 1,
+    limit = 5,
+    search,
+    category,
+    location,
+    startDate,
+    endDate,
+    sortBy = "date",
+    order = "asc",
+  } = req.query;
 
-  const keyword = req.query.keyword
-    ? { title: { $regex: req.query.keyword, $options: "i" } }
-    : {};
+  const query = { isDeleted: false };
 
-  const categoryFilter = req.query.category
-    ? { category: req.query.category }
-    : {};
+  // 🔎 Text Search
+  if (search) {
+    query.$text = { $search: search };
+  }
 
-  const sortBy = req.query.sort || "createdAt";
+  // 📂 Category
+  if (category) {
+    query.category = category;
+  }
 
-  const filter = { ...keyword, ...categoryFilter };
+  // 📍 Location
+  if (location) {
+    query.location = { $regex: location, $options: "i" };
+  }
 
-  const total = await Event.countDocuments(filter);
+  // 📅 Date Range
+  if (startDate || endDate) {
+    query.date = {};
+    if (startDate) query.date.$gte = new Date(startDate);
+    if (endDate) query.date.$lte = new Date(endDate);
+  }
 
-  const events = await Event.find(filter)
-    .sort(sortBy)
-    .skip(skip)
-    .limit(limit);
+  // 📊 Sorting
+  const sortOptions = {};
+  sortOptions[sortBy] = order === "desc" ? -1 : 1;
+
+  const total = await Event.countDocuments(query);
+
+  const events = await Event.find(query)
+    .populate("organizer", "name email")
+    .sort(sortOptions)
+    .skip((page - 1) * limit)
+    .limit(Number(limit));
 
   res.json({
     success: true,
-    page,
-    totalPages: Math.ceil(total / limit),
-    totalResults: total,
+    total,
+    page: Number(page),
+    pages: Math.ceil(total / limit),
     results: events.length,
     data: events,
   });
+});
+
+/**
+ * @desc    Get single event by ID
+ * @route   GET /api/events/:id
+ * @access  Public
+ */
+exports.getEventById = asyncHandler(async (req, res) => {
+  const event = await Event.findOne({ _id: req.params.id, isDeleted: false })
+    .populate("organizer", "name email");
+
+  if (!event) {
+    return res.status(404).json({ success: false, message: "Event not found" });
+  }
+
+  res.json({ success: true, data: event });
+});
+
+/**
+ * @desc    Create an event
+ * @route   POST /api/events
+ * @access  Protected (Organizer or Admin)
+ */
+exports.createEvent = asyncHandler(async (req, res) => {
+  const eventData = {
+    ...req.body,
+    organizer: req.user.id,
+  };
+
+  const event = await Event.create(eventData);
+
+  res.status(201).json({
+    success: true,
+    data: event,
+  });
+});
+
+/**
+ * @desc    Update an event
+ * @route   PUT /api/events/:id
+ * @access  Protected (Owner or Admin)
+ */
+exports.updateEvent = asyncHandler(async (req, res) => {
+  let event = await Event.findById(req.params.id);
+
+  if (!event || event.isDeleted) {
+    return res.status(404).json({ success: false, message: "Event not found" });
+  }
+
+  // Check ownership or admin role
+  if (event.organizer.toString() !== req.user.id && req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Not authorized to update this event" });
+  }
+
+  event = await Event.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.json({ success: true, data: event });
+});
+
+/**
+ * @desc    Delete an event (Soft Delete)
+ * @route   DELETE /api/events/:id
+ * @access  Protected (Owner or Admin)
+ */
+exports.deleteEvent = asyncHandler(async (req, res) => {
+  const event = await Event.findById(req.params.id);
+
+  if (!event || event.isDeleted) {
+    return res.status(404).json({ success: false, message: "Event not found" });
+  }
+
+  // Check ownership or admin role
+  if (event.organizer.toString() !== req.user.id && req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Not authorized to delete this event" });
+  }
+
+  event.isDeleted = true;
+  await event.save();
+
+  res.json({ success: true, message: "Event removed successfully" });
 });
