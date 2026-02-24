@@ -1,35 +1,36 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, User, ArrowRight, Zap, ShieldCheck, Users, Globe, ChevronRight } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Mail, Lock, User, Sparkles, CheckCircle2, Chrome } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
 const Landing = () => {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { login, user } = useAuth();
+
     const [isLogin, setIsLogin] = useState(location.pathname !== '/register');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-
-    const { login, user } = useAuth();
-    const navigate = useNavigate();
-
-    // Use effect for redirection and path sync
-    useEffect(() => {
-        if (user) {
-            navigate('/events');
-        }
-    }, [user, navigate]);
 
     useEffect(() => {
         setIsLogin(location.pathname !== '/register');
+        setError('');
+        setSuccessMessage('');
     }, [location.pathname]);
+
+    useEffect(() => {
+        if (user) navigate('/events');
+    }, [user, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setSuccessMessage('');
 
         try {
             if (isLogin) {
@@ -37,12 +38,13 @@ const Landing = () => {
                 navigate('/events');
             } else {
                 await api.post('/auth/register', formData);
-                // After registration, automatically log in
-                await login(formData.email, formData.password);
-                navigate('/events');
+                setSuccessMessage('Registration successful! Please sign in.');
+                setIsLogin(true);
+                navigate('/login');
+                setFormData(prev => ({ ...prev, password: '' }));
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Authentication failed. Please try again.');
+            setError(err.response?.data?.message || 'Authentication failed.');
         } finally {
             setLoading(false);
         }
@@ -52,184 +54,193 @@ const Landing = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const features = [
-        { icon: <Zap size={18} className="text-primary" />, text: "Real-time ticket booking" },
-        { icon: <ShieldCheck size={18} className="text-secondary" />, text: "Secure transactions" },
-        { icon: <Globe size={18} className="text-accent" />, text: "Global event reach" }
-    ];
-
     return (
-        <div className="min-h-[calc(100vh-80px)] flex flex-col md:flex-row animate-fade-in">
-            {/* LEFT SIDE: About EventMate */}
-            <div className="hidden md:flex flex-1 bg-surface/50 relative overflow-hidden flex-col justify-center px-12 lg:px-20">
-                <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/10 blur-[120px] rounded-full" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-secondary/10 blur-[100px] rounded-full" />
+        <div className="min-h-screen bg-[#070810] text-white flex flex-col font-['Inter'] selection:bg-primary/30 overflow-x-hidden">
+            {/* Background Aesthetic Glows */}
+            <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] -z-10 animate-pulse" />
+            <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/5 rounded-full blur-[120px] -z-10" />
 
-                <motion.div
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8 }}
-                    className="relative z-10 space-y-8"
-                >
-                    <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                        <Users size={32} className="text-white" />
-                    </div>
+            {/* Main Content Area */}
+            <main className="flex-1 flex flex-col md:flex-row items-center justify-center gap-24 lg:gap-48 px-6 py-24 max-w-[1400px] mx-auto w-full relative z-10">
 
-                    <h1 className="text-6xl lg:text-7xl font-black tracking-tighter leading-none">
-                        Manage events with <br />
-                        <span className="gradient-text">Absolute Ease.</span>
-                    </h1>
+                {/* LEFT SIDE: Hero Content */}
+                <div className="flex-1 space-y-12 text-center md:text-left">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                        className="space-y-10"
+                    >
+                        <h1 className="text-7xl lg:text-[130px] font-black leading-[0.8] tracking-tighter">
+                            Events, <br />
+                            <span className="text-primary glow-text">Evolved.</span>
+                        </h1>
+                        <p className="text-2xl text-text-muted font-medium max-w-lg leading-relaxed opacity-60">
+                            Master every detail with surgical precision and effortless elegance.
+                        </p>
+                    </motion.div>
 
-                    <p className="text-xl text-text-muted max-w-lg font-medium leading-relaxed">
-                        The all-in-one platform for creating, discovering, and booking events.
-                        Join thousands of organizers and attendees today.
-                    </p>
-
-                    <div className="space-y-4 pt-4">
-                        {features.map((f, i) => (
-                            <div key={i} className="flex items-center gap-4 text-sm font-bold tracking-wide">
-                                <div className="p-2 bg-white/5 rounded-lg border border-white/10">
-                                    {f.icon}
-                                </div>
-                                {f.text}
-                            </div>
-                        ))}
-                    </div>
-                </motion.div>
-
-                {/* Decorative Elements */}
-                <div className="absolute bottom-20 left-20 w-32 h-32 border border-white/5 rounded-full" />
-                <div className="absolute top-20 right-20 w-64 h-64 border border-white/5 rounded-full" />
-            </div>
-
-            {/* RIGHT SIDE: Auth Forms */}
-            <div className="flex-1 flex items-center justify-center p-6 md:p-12 relative">
-                <div className="md:hidden absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-primary/5 blur-[80px] rounded-full -z-10" />
-
-                <motion.div
-                    key={isLogin ? 'login' : 'register'}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="w-full max-w-[420px]"
-                >
-                    <div className="glass-card p-8 md:p-10 shadow-2xl relative overflow-hidden">
-                        {/* Status bar */}
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-secondary to-accent" />
-
-                        <div className="mb-10 text-center">
-                            <h2 className="text-3xl font-black mb-3">
-                                {isLogin ? 'Welcome Back' : 'Create Account'}
-                            </h2>
-                            <p className="text-text-muted font-medium">
-                                {isLogin
-                                    ? 'Log in to access your personalized dashboard'
-                                    : 'Join our community of event enthusiasts'}
-                            </p>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.8, duration: 1 }}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-md pt-8"
+                    >
+                        <div className="space-y-3">
+                            <Sparkles className="text-primary" size={28} />
+                            <h3 className="text-sm font-black uppercase tracking-widest text-white/80">Orchestration</h3>
+                            <p className="text-xs text-text-muted leading-relaxed">Next-gen event management engine.</p>
                         </div>
+                        <div className="space-y-3">
+                            <CheckCircle2 className="text-primary" size={28} />
+                            <h3 className="text-sm font-black uppercase tracking-widest text-white/80">Precision</h3>
+                            <p className="text-xs text-text-muted leading-relaxed">Surgical accuracy in every detail.</p>
+                        </div>
+                    </motion.div>
+                </div>
 
-                        {error && (
-                            <div className="mb-6 p-4 bg-error/10 border border-error/20 text-error rounded-xl flex items-center gap-3 text-sm font-bold">
-                                {error}
+                {/* RIGHT SIDE: Auth Card */}
+                <div className="flex-1 flex justify-center w-full max-w-[540px]">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={isLogin ? 'login' : 'register'}
+                            initial={{ opacity: 0, x: 20, filter: 'blur(20px)' }}
+                            animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+                            exit={{ opacity: 0, x: -20, filter: 'blur(20px)' }}
+                            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                            className="bg-white/[0.02] backdrop-blur-3xl p-12 md:p-16 py-20 rounded-[60px] w-full relative group shadow-none border-none"
+                        >
+                            <div className="mb-20">
+                                <h2 className="text-5xl font-black mb-6 tracking-tighter leading-none">
+                                    {isLogin ? 'Welcome Back' : 'Create Account'}
+                                </h2>
+                                <p className="text-text-muted text-xl font-medium opacity-40 italic">
+                                    {isLogin ? 'Sign in to your dashboard.' : 'Start your journey with us.'}
+                                </p>
                             </div>
-                        )}
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {!isLogin && (
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-text-muted px-1 flex items-center gap-2">
-                                        <User size={14} className="text-primary" />
-                                        Full Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        required
-                                        placeholder="Alex Johnson"
-                                        value={formData.name}
-                                        onChange={handleInputChange}
-                                        className="bg-surface/50 border-white/5 focus:border-primary/50 transition-all"
-                                    />
-                                </div>
+                            {error && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    className="mb-12 text-error text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4"
+                                >
+                                    <span className="w-8 h-px bg-error/40" />
+                                    {error}
+                                </motion.div>
                             )}
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-text-muted px-1 flex items-center gap-2">
-                                    <Mail size={14} className="text-primary" />
-                                    Email Address
-                                </label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    required
-                                    placeholder="you@example.com"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    className="bg-surface/50 border-white/5 focus:border-primary/50 transition-all"
-                                />
-                            </div>
+                            {successMessage && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    className="mb-12 text-success text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4"
+                                >
+                                    <span className="w-8 h-px bg-success/40" />
+                                    {successMessage}
+                                </motion.div>
+                            )}
 
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center px-1">
-                                    <label className="text-sm font-bold text-text-muted flex items-center gap-2">
-                                        <Lock size={14} className="text-primary" />
-                                        Password
-                                    </label>
+                            <form onSubmit={handleSubmit} className="flex flex-col gap-12">
+                                {!isLogin && (
+                                    <div className="relative group/input">
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            required
+                                            placeholder="Full Name"
+                                            value={formData.name}
+                                            onChange={handleInputChange}
+                                            className="bg-transparent border-none focus:ring-0 pl-0 h-16 text-lg font-medium transition-all w-full placeholder:text-text-muted/20"
+                                        />
+                                        <div className="absolute bottom-0 left-0 w-full h-px bg-white/5" />
+                                        <div className="absolute bottom-0 left-0 w-0 h-px bg-primary transition-all duration-700 group-focus-within/input:w-full" />
+                                    </div>
+                                )}
+
+                                <div className="relative group/input">
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        required
+                                        placeholder="Email Address"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        className="bg-transparent border-none focus:ring-0 pl-0 h-16 text-lg font-medium transition-all w-full placeholder:text-text-muted/20"
+                                    />
+                                    <div className="absolute bottom-0 left-0 w-full h-px bg-white/5" />
+                                    <div className="absolute bottom-0 left-0 w-0 h-px bg-primary transition-all duration-700 group-focus-within/input:w-full" />
+                                </div>
+
+                                <div className="relative group/input">
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        required
+                                        placeholder="Password"
+                                        value={formData.password}
+                                        onChange={handleInputChange}
+                                        className="bg-transparent border-none focus:ring-0 pl-0 h-16 text-lg font-medium transition-all w-full placeholder:text-text-muted/20"
+                                    />
+                                    <div className="absolute bottom-0 left-0 w-full h-px bg-white/5" />
+                                    <div className="absolute bottom-0 left-0 w-0 h-px bg-primary transition-all duration-700 group-focus-within/input:w-full" />
                                     {isLogin && (
-                                        <button type="button" className="text-xs font-bold text-primary hover:underline">
+                                        <button
+                                            type="button"
+                                            className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-[0.2em] text-text-muted/40 hover:text-primary transition-all"
+                                        >
                                             Forgot?
                                         </button>
                                     )}
                                 </div>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    required
-                                    placeholder="••••••••"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    className="bg-surface/50 border-white/5 focus:border-primary/50 transition-all"
-                                />
+
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full py-4 text-xs font-black tracking-[0.4em] uppercase bg-primary hover:bg-primary-light transition-all rounded-full mt-8 active:scale-[0.97] flex items-center justify-center gap-4 border-none shadow-[0_20px_40px_-10px_rgba(139,92,246,0.3)]"
+                                >
+                                    {loading ? (
+                                        <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        isLogin ? 'Sign In' : 'Join Now'
+                                    )}
+                                </button>
+                            </form>
+
+                            <div className="my-16 flex items-center justify-center gap-8">
+                                <button className="p-5 bg-white/[0.03] rounded-full hover:bg-white/[0.08] transition-all active:scale-[0.9] text-text-muted hover:text-white border-none">
+                                    <Chrome size={22} />
+                                </button>
+                                <button className="p-5 bg-white/[0.03] rounded-full hover:bg-white/[0.08] transition-all active:scale-[0.9] text-text-muted hover:text-white border-none">
+                                    <span className="text-2xl leading-none font-light"></span>
+                                </button>
                             </div>
 
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2"
-                            >
-                                {loading && <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                                {isLogin ? 'Sign In Now' : 'Create Free Account'}
-                                {!loading && <ChevronRight size={20} />}
-                            </button>
-                        </form>
+                            <p className="mt-12 text-center text-[10px] text-text-muted font-black uppercase tracking-[0.3em] opacity-40">
+                                {isLogin ? "New here?" : "Member?"}{' '}
+                                <button
+                                    onClick={() => {
+                                        setIsLogin(!isLogin);
+                                        navigate(isLogin ? '/register' : '/login');
+                                    }}
+                                    className="text-primary hover:text-primary-light transition-colors ml-3 underline underline-offset-8 decoration-primary/20"
+                                >
+                                    {isLogin ? 'Create Workspace' : 'Sign In'}
+                                </button>
+                            </p>
+                        </motion.div>
+                    </AnimatePresence>
+                </div>
+            </main>
 
-                        <div className="relative my-10 text-center">
-                            <div className="absolute inset-0 flex items-center">
-                                <div className="w-full border-t border-white/5"></div>
-                            </div>
-                            <span className="relative bg-surface px-4 text-[10px] font-black uppercase tracking-[0.2em] text-text-muted">
-                                OR CONTINUE WITH
-                            </span>
-                        </div>
-
-                        <button className="w-full google-btn mb-10 border border-white/5 hover:bg-white/5 transition-all">
-                            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                            Continue with Google
-                        </button>
-
-                        <p className="text-center text-sm text-text-muted font-medium">
-                            {isLogin
-                                ? "Don't have an account? "
-                                : "Already have an account? "}
-                            <Link
-                                to={isLogin ? '/register' : '/login'}
-                                className="text-primary font-black hover:underline transition-colors"
-                            >
-                                {isLogin ? 'Create Account' : 'Sign In'}
-                            </Link>
-                        </p>
-                    </div>
-                </motion.div>
-            </div>
+            {/* FOOTER */}
+            <footer className="py-24 opacity-20">
+                <div className="container mx-auto px-6 flex flex-col items-center gap-12">
+                    <p className="text-[10px] font-black uppercase tracking-[2em] text-white/40">
+                        EventMate
+                    </p>
+                </div>
+            </footer>
         </div>
     );
 };

@@ -1,17 +1,22 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, Calendar, Users, ShieldCheck, Ticket, Loader2, CheckCircle2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Calendar, MapPin, Users, Ticket, ArrowLeft,
+    Loader2, CheckCircle2, AlertCircle, Clock, Tag
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const EventDetails = () => {
     const { id } = useParams();
-    const { user } = useAuth();
     const navigate = useNavigate();
+    const { user } = useAuth();
+
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [bookingLoading, setBookingLoading] = useState(false);
+    const [booking, setBooking] = useState(false);
+    const [isBooked, setIsBooked] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
 
     useEffect(() => {
@@ -19,176 +24,199 @@ const EventDetails = () => {
             try {
                 const res = await api.get(`/events/${id}`);
                 setEvent(res.data.data);
+
+                if (user) {
+                    const bookingsRes = await api.get('/bookings/me');
+                    const bookings = bookingsRes.data.data || [];
+                    setIsBooked(bookings.some(b => b.event._id === id || b.event === id));
+                }
             } catch (err) {
-                console.error('Error fetching event details:', err);
+                console.error('Error fetching event:', err);
             } finally {
                 setLoading(false);
             }
         };
         fetchEvent();
-    }, [id]);
+    }, [id, user]);
 
-    const handleBooking = async () => {
-        if (!user) {
-            navigate('/login');
-            return;
-        }
-
-        setBookingLoading(true);
-        setMessage({ text: '', type: '' });
-
+    const handleBook = async () => {
+        if (!user) { navigate('/login'); return; }
+        setBooking(true);
         try {
-            const res = await api.post(`/events/${id}/book`);
-            setMessage({ text: 'Booking successful! Your seat is reserved.', type: 'success' });
-            // Refresh event data to update available seats
-            const updatedEvent = await api.get(`/events/${id}`);
-            setEvent(updatedEvent.data.data);
+            await api.post(`/events/${id}/book`);
+            setIsBooked(true);
+            setMessage({ text: 'Successfully registered for this event!', type: 'success' });
+            const res = await api.get(`/events/${id}`);
+            setEvent(res.data.data);
         } catch (err) {
-            setMessage({
-                text: err.response?.data?.message || 'Something went wrong. Please try again.',
-                type: 'error'
-            });
+            setMessage({ text: err.response?.data?.message || 'Booking failed. Please try again.', type: 'error' });
         } finally {
-            setBookingLoading(false);
+            setBooking(false);
+            setTimeout(() => setMessage({ text: '', type: '' }), 4000);
         }
     };
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-[60vh]">
-                <Loader2 className="animate-spin text-primary" size={48} />
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 size={48} className="animate-spin text-primary" />
             </div>
         );
     }
 
     if (!event) {
         return (
-            <div className="text-center py-20 px-4 glass-card">
-                <h2 className="text-2xl font-bold mb-4">Event not found</h2>
-                <button onClick={() => navigate('/')} className="btn-primary">Go Home</button>
+            <div className="min-h-screen flex flex-col items-center justify-center gap-6">
+                <AlertCircle size={64} className="text-error opacity-40" />
+                <h2 className="text-2xl font-bold">Event not found</h2>
+                <Link to="/events" className="btn-primary px-8 py-3">Browse Events</Link>
             </div>
         );
     }
 
-    const isFull = event.bookedSeats >= event.capacity;
+    const isPast = new Date(event.date) < new Date();
+    const isFull = event.availableSeats <= 0;
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8 animate-fade-in">
-            <div className="glass-card overflow-hidden">
-                {/* Banner Area (Hero) */}
-                <div className="h-64 bg-gradient-to-r from-primary/20 via-accent/20 to-secondary/20 relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-center px-6 leading-tight">
+        <div className="animate-fade-in min-h-screen pb-20 relative overflow-hidden">
+            {/* Background blobs */}
+            <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-primary/10 blur-[150px] rounded-full -z-10" />
+            <div className="absolute bottom-[10%] left-[-5%] w-[400px] h-[400px] bg-accent/5 blur-[100px] rounded-full -z-10" />
+
+            <div className="container mx-auto px-4 pt-10">
+                {/* Back button */}
+                <motion.button
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 text-text-muted hover:text-white transition-colors mb-10 font-bold group"
+                >
+                    <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                    Back
+                </motion.button>
+
+                <div className="max-w-4xl mx-auto">
+                    {/* Message Banner */}
+                    {message.text && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`mb-8 px-6 py-4 rounded-2xl flex items-center gap-3 font-bold border ${message.type === 'success'
+                                    ? 'bg-success/10 text-success border-success/20'
+                                    : 'bg-error/10 text-error border-error/20'
+                                }`}
+                        >
+                            {message.type === 'success' ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}
+                            {message.text}
+                        </motion.div>
+                    )}
+
+                    {/* Header Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="glass-card p-8 md:p-12 mb-8"
+                    >
+                        <div className="flex flex-wrap gap-3 mb-6">
+                            {event.category && (
+                                <span className="px-4 py-1.5 bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-widest rounded-lg flex items-center gap-2">
+                                    <Tag size={12} /> {event.category}
+                                </span>
+                            )}
+                            {isPast && (
+                                <span className="px-4 py-1.5 bg-white/5 border border-white/10 text-text-muted text-xs font-black uppercase tracking-widest rounded-lg">
+                                    Past Event
+                                </span>
+                            )}
+                            {!isPast && isFull && (
+                                <span className="px-4 py-1.5 bg-error/10 border border-error/20 text-error text-xs font-black uppercase tracking-widest rounded-lg">
+                                    Sold Out
+                                </span>
+                            )}
+                        </div>
+
+                        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-6 leading-tight">
                             {event.title}
                         </h1>
-                    </div>
-                    <div className="absolute top-4 left-4">
-                        <span className="bg-glass text-text-muted px-4 py-1 rounded-full text-sm border border-border">
-                            {event.category || 'Event'}
-                        </span>
-                    </div>
-                </div>
 
-                <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-12">
-                    {/* Main Info */}
-                    <div className="md:col-span-2 space-y-8">
-                        <section>
-                            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-                                About the Event
-                            </h2>
-                            <p className="text-text-muted leading-relaxed whitespace-pre-line text-lg">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                                    <Calendar size={22} className="text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-text-muted uppercase font-black tracking-widest mb-1">Date</p>
+                                    <p className="font-bold text-sm">
+                                        {new Date(event.date).toLocaleDateString('en-US', {
+                                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                                        })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0">
+                                    <MapPin size={22} className="text-accent" />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-text-muted uppercase font-black tracking-widest mb-1">Location</p>
+                                    <p className="font-bold text-sm">{event.location}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${isFull ? 'bg-error/10' : 'bg-success/10'}`}>
+                                    <Users size={22} className={isFull ? 'text-error' : 'text-success'} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-text-muted uppercase font-black tracking-widest mb-1">Seats Left</p>
+                                    <p className={`font-bold text-sm ${isFull ? 'text-error' : 'text-success'}`}>
+                                        {event.availableSeats ?? 0} / {event.capacity ?? 0}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Book Button */}
+                        <button
+                            onClick={handleBook}
+                            disabled={booking || isBooked || isFull || isPast}
+                            className={`w-full sm:w-auto px-10 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all text-lg ${isBooked
+                                    ? 'bg-success/10 text-success border border-success/20 cursor-default'
+                                    : isFull || isPast
+                                        ? 'bg-white/5 text-text-muted cursor-not-allowed border border-white/10'
+                                        : 'btn-primary'
+                                }`}
+                        >
+                            {booking ? (
+                                <><Loader2 size={20} className="animate-spin" /> Booking...</>
+                            ) : isBooked ? (
+                                <><CheckCircle2 size={20} /> Registered</>
+                            ) : isPast ? (
+                                <><Clock size={20} /> Event Ended</>
+                            ) : isFull ? (
+                                <><AlertCircle size={20} /> Sold Out</>
+                            ) : (
+                                <><Ticket size={20} /> Register Now</>
+                            )}
+                        </button>
+                    </motion.div>
+
+                    {/* Description Card */}
+                    {event.description && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2, duration: 0.5 }}
+                            className="glass-card p-8 md:p-12"
+                        >
+                            <h2 className="text-2xl font-black mb-6 tracking-tight">About this Event</h2>
+                            <p className="text-text-muted leading-relaxed text-base whitespace-pre-wrap font-medium">
                                 {event.description}
                             </p>
-                        </section>
-
-                        <div className="grid grid-cols-2 gap-6">
-                            <div className="bg-surface/50 p-4 rounded-xl border border-border flex items-center gap-4">
-                                <div className="p-3 bg-primary/10 rounded-lg text-primary">
-                                    <Calendar size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-text-muted uppercase tracking-wider font-bold">Date & Time</p>
-                                    <p className="font-semibold">
-                                        {new Date(event.date).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="bg-surface/50 p-4 rounded-xl border border-border flex items-center gap-4">
-                                <div className="p-3 bg-secondary/10 rounded-lg text-secondary">
-                                    <MapPin size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-xs text-text-muted uppercase tracking-wider font-bold">Location</p>
-                                    <p className="font-semibold">{event.location}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Booking Sidebar */}
-                    <div className="space-y-6">
-                        <div className="bg-surface p-6 rounded-2xl border border-primary/20 shadow-xl">
-                            <div className="flex justify-between items-center mb-6">
-                                <div>
-                                    <p className="text-text-muted text-sm uppercase font-bold tracking-widest">Available Seats</p>
-                                    <p className="text-3xl font-black">
-                                        {Math.max(0, event.capacity - event.bookedSeats)}
-                                        <span className="text-text-muted text-lg font-normal"> / {event.capacity}</span>
-                                    </p>
-                                </div>
-                                <Users size={32} className="text-primary/40" />
-                            </div>
-
-                            <div className="space-y-4">
-                                <AnimatePresence mode="wait">
-                                    {message.text && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: 'auto' }}
-                                            exit={{ opacity: 0, height: 0 }}
-                                            className={`p-3 rounded-lg flex items-start gap-2 text-sm ${message.type === 'success' ? 'bg-success/20 text-success border border-success/30' : 'bg-error/20 text-error border border-error/30'
-                                                }`}
-                                        >
-                                            {message.type === 'success' ? <CheckCircle2 size={18} className="shrink-0" /> : <ShieldCheck size={18} className="shrink-0" />}
-                                            {message.text}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-
-                                <button
-                                    onClick={handleBooking}
-                                    disabled={bookingLoading || isFull}
-                                    className={`w-full py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${isFull
-                                            ? 'bg-surface-hover text-text-muted cursor-not-allowed'
-                                            : 'bg-primary hover:bg-primary-hover text-white shadow-lg shadow-primary/30 active:scale-[0.98]'
-                                        }`}
-                                >
-                                    {bookingLoading ? (
-                                        <Loader2 className="animate-spin" size={20} />
-                                    ) : isFull ? (
-                                        'Reserved (Full)'
-                                    ) : (
-                                        <>
-                                            <Ticket size={20} />
-                                            Book My Seat Now
-                                        </>
-                                    )}
-                                </button>
-
-                                <p className="text-xs text-text-muted text-center italic">
-                                    * Instant confirmation. Digital ticket will be issued.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="glass-card p-6 space-y-4">
-                            <div className="flex items-center gap-3 text-sm">
-                                <ShieldCheck size={20} className="text-success" />
-                                <span>Verified Organizer</span>
-                            </div>
-                            <p className="text-sm font-medium pl-8">{event.organizer?.name || 'Anonymous Organizer'}</p>
-                        </div>
-                    </div>
+                        </motion.div>
+                    )}
                 </div>
             </div>
         </div>

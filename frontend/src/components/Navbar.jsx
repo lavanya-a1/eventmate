@@ -30,118 +30,74 @@ const Navbar = () => {
     }, []);
 
     return (
-        <div className="pt-6 pb-2 px-4 sticky top-0 z-50 w-full flex justify-center">
-            <nav className="glass-card w-full max-w-[1200px] shadow-2xl border-white/5 relative">
-                <div className="flex justify-between items-center w-full px-6 py-4">
-                    {/* LEFT SIDE: Brand and Primary Nav */}
-                    <div className="flex items-center gap-10">
-                        <Link to="/" className="flex items-center gap-2 group shrink-0">
-                            <Calendar size={28} className="text-primary group-hover:scale-110 transition-all duration-300" />
-                            <span className="text-xl font-bold gradient-text tracking-tight">EventMate</span>
-                        </Link>
+        <header className="fixed top-0 left-0 w-full z-50 bg-bg/80 backdrop-blur-md">
+            <nav className="container mx-auto px-6 py-4 flex items-center justify-between">
+                {/* Logo */}
+                <Link to="/" className="flex items-center gap-2.5 group">
+                    <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center group-hover:bg-primary/30 transition-all">
+                        <Calendar size={22} className="text-primary" />
+                    </div>
+                    <span className="text-xl font-black tracking-tight text-white">EventMate</span>
+                </Link>
 
-                        <div className="hidden md:flex items-center gap-6">
-                            <Link to="/" className="text-sm font-bold text-text-muted hover:text-white transition-colors">About</Link>
-                            <Link to="/events" className="flex items-center gap-2 text-sm font-bold text-text-muted hover:text-white transition-colors">
-                                <Compass size={18} />
-                                Explore Events
+                {/* Navigation Links */}
+                <div className="hidden md:flex items-center gap-10">
+                    <Link to="/" className="text-sm font-bold text-text-muted hover:text-white transition-colors">About</Link>
+                    <Link to="/events" className="text-sm font-bold text-text-muted hover:text-white transition-colors">Explore</Link>
+
+                    {user ? (
+                        <div className="relative" ref={profileMenuRef}>
+                            <button
+                                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                                className="flex items-center gap-3 p-1 rounded-full hover:bg-white/5 transition-all"
+                            >
+                                <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
+                                    <User size={16} className="text-primary" />
+                                </div>
+                                <span className="text-sm font-bold">{user.name.split(' ')[0]}</span>
+                                <ChevronDown size={14} className={`text-text-muted transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {showProfileMenu && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="absolute top-full right-0 mt-3 w-48 bg-surface border border-white/10 shadow-2xl rounded-2xl overflow-hidden"
+                                    >
+                                        <div className="py-2">
+                                            <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-white/5 transition-all">
+                                                <User size={16} /> Profile
+                                            </Link>
+                                            <Link to="/my-bookings" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-white/5 transition-all">
+                                                <Ticket size={16} /> Bookings
+                                            </Link>
+                                            <div className="h-px bg-white/5 my-1" />
+                                            <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error/10 w-full text-left font-bold transition-all">
+                                                <LogOut size={16} /> Logout
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-10">
+                            <Link to="/login" className="text-sm font-bold text-text-muted hover:text-white transition-colors">Login</Link>
+                            <Link to="/register" className="btn-primary py-2.5 px-6 rounded-xl hover:scale-105 transition-all active:scale-95">
+                                Sign Up
                             </Link>
                         </div>
-                    </div>
-
-                    {/* RIGHT SIDE: Auth and Profile */}
-                    <div className="flex items-center gap-6">
-                        {user ? (
-                            <div className="flex items-center gap-6">
-                                <Link to="/my-bookings" className="flex items-center gap-2 text-sm font-bold hover:text-primary transition-colors">
-                                    <Ticket size={18} />
-                                    My Bookings
-                                </Link>
-                                <div className="h-6 w-px bg-white/10 mx-2" />
-                                <div className="relative" ref={profileMenuRef}>
-                                    <button
-                                        onClick={() => setShowProfileMenu(!showProfileMenu)}
-                                        className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all group"
-                                    >
-                                        <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                                            <User size={16} className="text-primary" />
-                                        </div>
-                                        <div className="flex flex-col items-start pr-1">
-                                            <span className="text-sm font-bold leading-none">{user.name}</span>
-                                            <span className="text-[10px] text-text-muted uppercase tracking-widest leading-none mt-1">{user.role}</span>
-                                        </div>
-                                        <ChevronDown size={16} className={`text-text-muted transition-transform duration-300 ${showProfileMenu ? 'rotate-180' : ''}`} />
-                                    </button>
-
-                                    {/* Profile Dropdown Menu */}
-                                    <AnimatePresence>
-                                        {showProfileMenu && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                                transition={{ duration: 0.2 }}
-                                                className="absolute top-full right-0 mt-3 w-56 glass-card border border-white/10 shadow-2xl rounded-2xl overflow-hidden z-50"
-                                            >
-                                                <div className="p-4 border-b border-white/5">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                                                            <User size={18} className="text-primary" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-bold text-sm">{user.name}</p>
-                                                            <p className="text-[10px] text-text-muted uppercase tracking-widest">{user.role}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="py-2">
-                                                    <Link
-                                                        to="/profile"
-                                                        className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 transition-colors font-medium border-b border-white/5"
-                                                        onClick={() => setShowProfileMenu(false)}
-                                                    >
-                                                        <User size={16} className="text-primary" />
-                                                        View Profile
-                                                    </Link>
-                                                    <Link
-                                                        to="/my-bookings"
-                                                        className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 transition-colors font-medium"
-                                                        onClick={() => setShowProfileMenu(false)}
-                                                    >
-                                                        <Ticket size={16} className="text-secondary" />
-                                                        My Bookings
-                                                    </Link>
-                                                    <div className="h-px bg-white/5 my-1" />
-                                                    <button
-                                                        onClick={() => {
-                                                            handleLogout();
-                                                            setShowProfileMenu(false);
-                                                        }}
-                                                        className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-error/10 hover:text-error transition-colors w-full text-left font-bold"
-                                                    >
-                                                        <LogOut size={16} />
-                                                        Logout
-                                                    </button>
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-8">
-                                <Link to="/login" className="text-sm font-bold text-text-muted hover:text-white transition-colors">
-                                    Login
-                                </Link>
-                                <Link to="/register" className="btn-primary text-sm px-6 py-2.5">
-                                    Sign Up
-                                </Link>
-                            </div>
-                        )}
-                    </div>
+                    )}
                 </div>
+
+                {/* Mobile Menu Toggle (Simplified for now) */}
+                <button className="md:hidden p-2 text-text-muted hover:text-white">
+                    <Compass size={24} />
+                </button>
             </nav>
-        </div>
+        </header>
     );
 };
 
