@@ -110,11 +110,11 @@ const Landing = () => {
                             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                             className="bg-white/[0.02] backdrop-blur-3xl p-12 md:p-16 py-20 rounded-[60px] w-full relative group shadow-none border-none"
                         >
-                            <div className="mb-20">
-                                <h2 className="text-5xl font-black mb-6 tracking-tighter leading-none">
+                            <div className="mb-2">
+                                <h2 className="text-4xl font-black mb-2 tracking-tighter leading-none">
                                     {isLogin ? 'Welcome Back' : 'Create Account'}
                                 </h2>
-                                <p className="text-text-muted text-xl font-medium opacity-40 italic">
+                                <p className="text-text-muted text-lg font-medium opacity-40 italic">
                                     {isLogin ? 'Sign in to your dashboard.' : 'Start your journey with us.'}
                                 </p>
                             </div>
@@ -123,7 +123,7 @@ const Landing = () => {
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
-                                    className="mb-12 text-error text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4"
+                                    className="mb-6 text-error text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4"
                                 >
                                     <span className="w-8 h-px bg-error/40" />
                                     {error}
@@ -134,14 +134,14 @@ const Landing = () => {
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
-                                    className="mb-12 text-success text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4"
+                                    className="mb-6 text-success text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4"
                                 >
                                     <span className="w-8 h-px bg-success/40" />
                                     {successMessage}
                                 </motion.div>
                             )}
 
-                            <form onSubmit={handleSubmit} className="flex flex-col gap-12">
+                            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                                 {!isLogin && (
                                     <div className="relative group/input">
                                         <input
