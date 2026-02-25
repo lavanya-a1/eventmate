@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const asyncHandler = require("../utils/asyncHandler");
 const Booking = require("../models/Booking");
 const Event = require("../models/Event");
+const Notification = require("../models/Notification");
 
 exports.createBooking = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -14,11 +15,11 @@ exports.createBooking = asyncHandler(async (req, res) => {
   const existing = await Booking.findOne({
     user: userId,
     event: eventId,
-    status: "confirmed",
+    status: { $in: ["confirmed", "pending"] },
   }).lean();
 
   if (existing) {
-    return res.status(409).json({ success: false, message: "You already booked this event" });
+    return res.status(409).json({ success: false, message: "You already have a booking for this event" });
   }
 
   const now = new Date();
@@ -50,8 +51,16 @@ exports.createBooking = asyncHandler(async (req, res) => {
     const booking = await Booking.create({
       user: userId,
       event: eventId,
-      status: "confirmed",
+      status: "pending",
       seats: 1,
+    });
+
+    // Create notification
+    await Notification.create({
+      user: userId,
+      title: 'Booking Initiated',
+      message: `Your booking for ${reservedEvent.title} has been initiated. Please complete the payment.`,
+      type: 'info'
     });
 
     return res.status(201).json({

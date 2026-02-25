@@ -7,6 +7,14 @@ const eventSchema = new mongoose.Schema(
     location: String,
     date: { type: Date, required: true },
     category: String,
+    image: {
+      type: String,
+      default: "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&q=80"
+    },
+    price: {
+      type: Number,
+      default: 0
+    },
     capacity: {
       type: Number,
       required: true,
@@ -22,9 +30,9 @@ const eventSchema = new mongoose.Schema(
       ref: "User",
     },
     isDeleted: {
-  type: Boolean,
-  default: false,
-},
+      type: Boolean,
+      default: false,
+    },
 
   },
   {

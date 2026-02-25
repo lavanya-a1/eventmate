@@ -1,5 +1,4 @@
 const express = require("express");
-const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
 const authController = require("../controllers/authController");
@@ -15,46 +14,17 @@ router.post("/login", authController.login);
 router.get("/me", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
     res.json({ success: true, data: user });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
 router.put("/profile", auth, authController.updateProfile);
 router.put("/password", auth, authController.updatePassword);
-
-// Keep only registration and login routes. Other logic is in event/booking controllers.
-router.post("/register", async (req, res) => {
-  // Existing redundant register logic, but keeping it if authController is not fully used
-  try {
-    const { name, email, password, role } = req.body;
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: "User already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || "attendee"
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      data: { id: user._id }
-    });
-
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-module.exports = router;
+router.put("/updatedetails", auth, authController.updateDetails);
 
 module.exports = router;

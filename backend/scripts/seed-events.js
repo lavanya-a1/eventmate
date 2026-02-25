@@ -50,6 +50,15 @@ const seedEvents = async () => {
                     organizer: ORGANIZER_ID
                 },
                 {
+                    title: 'Photography Workshop',
+                    description: 'Master the art of visual storytelling with professional photographers.',
+                    location: 'Downtown Studio',
+                    date: new Date('2026-09-12T10:00:00Z'),
+                    category: 'Arts',
+                    capacity: 50,
+                    organizer: ORGANIZER_ID
+                },
+                {
                     title: 'Web Dev Conference 2025',
                     description: 'Exploring the latest trends in web development.',
                     location: 'New York, NY',

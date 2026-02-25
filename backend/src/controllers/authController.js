@@ -14,7 +14,14 @@ exports.register = async (req, res, next) => {
       password: hashed
     });
 
-    res.status(201).json(user);
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      data: userResponse
+    });
   } catch (err) {
     next(err);
   }
@@ -23,6 +30,7 @@ const asyncHandler = require("../utils/asyncHandler");
 
 exports.login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  console.log('Login attempt for:', email);
 
   const user = await User.findOne({ email });
   if (!user) return res.status(400).json({ message: "User not found" });
@@ -82,6 +90,41 @@ exports.updatePassword = asyncHandler(async (req, res) => {
   await user.save();
 
   res.json({ success: true, message: "Password updated successfully" });
+});
+
+exports.updateDetails = asyncHandler(async (req, res) => {
+  const { name, email, currentPassword, newPassword } = req.body;
+  const user = await User.findById(req.user.id);
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  // Update profile
+  user.name = name || user.name;
+  user.email = email || user.email;
+
+  // Handle password change if requested
+  if (newPassword) {
+    if (!currentPassword) {
+      return res.status(400).json({ message: "Current password is required to change password" });
+    }
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect current password" });
+    }
+    user.password = await bcrypt.hash(newPassword, 10);
+  }
+
+  const updatedUser = await user.save();
+
+  res.json({
+    success: true,
+    data: {
+      _id: updatedUser._id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role
+    }
+  });
 });
 
 

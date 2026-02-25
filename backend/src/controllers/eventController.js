@@ -21,9 +21,14 @@ exports.getAllEvents = asyncHandler(async (req, res) => {
 
   const query = { isDeleted: false };
 
-  // 🔎 Text Search
+  // 🔎 Flexible Search (Regex)
   if (search) {
-    query.$text = { $search: search };
+    query.$or = [
+      { title: { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } },
+      { location: { $regex: search, $options: "i" } },
+      { category: { $regex: search, $options: "i" } }
+    ];
   }
 
   // 📂 Category
@@ -91,6 +96,10 @@ exports.createEvent = asyncHandler(async (req, res) => {
     ...req.body,
     organizer: req.user.id,
   };
+
+  if (req.file) {
+    eventData.image = req.file.path;
+  }
 
   const event = await Event.create(eventData);
 

@@ -3,6 +3,7 @@ const auth = require("../middleware/auth");
 const role = require("../middleware/role");
 const eventController = require("../controllers/eventController");
 const bookingController = require("../controllers/bookingController");
+const { upload } = require("../config/cloudinary");
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ const router = express.Router();
  * @desc    Create an event
  * @access  Protected (Organizer or Admin)
  */
-router.post("/", auth, role(["organizer", "admin"]), eventController.createEvent);
+router.post("/", auth, role(["organizer", "admin"]), upload.single('image'), eventController.createEvent);
 
 /**
  * @route   GET /api/events
