@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    const res = await api.get('/auth/me'); // Assuming there is an /auth/me endpoint
+                    const res = await api.get('/auth/me');
                     setUser(res.data.data);
                 } catch (err) {
                     localStorage.removeItem('token');
@@ -31,13 +31,18 @@ export const AuthProvider = ({ children }) => {
         return res.data;
     };
 
+    const register = async ({ name, email, password }) => {
+        const res = await api.post('/auth/register', { name, email, password });
+        return res.data;
+    };
+
     const logout = () => {
         localStorage.removeItem('token');
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, setUser, loading, login, logout }}>
+        <AuthContext.Provider value={{ user, setUser, loading, login, register, logout }}>
             {children}
         </AuthContext.Provider>
     );

@@ -23,7 +23,7 @@ const Landing = () => {
     }, [location.pathname]);
 
     useEffect(() => {
-        if (user) navigate('/events');
+        if (user) navigate('/dashboard');
     }, [user, navigate]);
 
     const handleSubmit = async (e) => {
@@ -35,7 +35,7 @@ const Landing = () => {
         try {
             if (isLogin) {
                 await login(formData.email, formData.password);
-                navigate('/events');
+                navigate('/dashboard');
             } else {
                 await api.post('/auth/register', formData);
                 setSuccessMessage('Registration successful! Please sign in.');

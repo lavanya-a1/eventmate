@@ -1,225 +1,215 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import api from '../api/axios';
-import { useAuth } from '../context/AuthContext';
-import {
-    User, Mail, Lock, CheckCircle2, AlertCircle,
-    Loader2, LogOut, ShieldCheck, Edit3
-} from 'lucide-react';
-import { motion } from 'framer-motion';
+﻿import React, { useState, useEffect } from 'react';
+import { User, Mail, Lock, Shield, History, Save, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useApi, useMutation } from '../hooks/useApi';
+import { getProfile, updateProfile, changePassword } from '../api/user';
+import { getMyBookings } from '../api/bookings';
 
-const Profile = () => {
-    const { user, setUser, logout } = useAuth();
-    const navigate = useNavigate();
+const InputField = ({ label, type = 'text', value, onChange, placeholder, disabled }) => (
+    <div>
+        <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">{label}</label>
+        <input type={type} value={value} onChange={onChange} placeholder={placeholder}
+            disabled={disabled}
+            className="w-full px-4 py-2.5 bg-[#070713] border border-white/[0.07] rounded-xl text-sm text-white
+                       placeholder-slate-600 focus:outline-none focus:border-primary-500/50 disabled:opacity-50" />
+    </div>
+);
 
-    const [form, setForm] = useState({
-        name: user?.name || '',
-        email: user?.email || '',
-        currentPassword: '',
-        newPassword: '',
-    });
-    const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState({ text: '', type: '' });
+const statusVariant = (booking) => {
+    if (booking.status === 'cancelled') return 'text-red-400';
+    if (booking.status === 'pending')   return 'text-yellow-400';
+    const past = new Date(booking.event?.date) < new Date();
+    return past ? 'text-emerald-400' : 'text-primary-400';
+};
 
-    if (!user) {
-        navigate('/login');
-        return null;
-    }
+const statusLabel = (booking) => {
+    if (booking.status === 'cancelled') return 'Cancelled';
+    if (booking.status === 'pending')   return 'Pending';
+    return new Date(booking.event?.date) < new Date() ? 'Completed' : 'Upcoming';
+};
 
-    const handleChange = (e) => {
-        setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    };
+const formatDate = (d) =>
+    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
 
-    const handleSave = async (e) => {
+export default function Profile() {
+    const [activeTab, setActiveTab] = useState('personal');
+    const { data: profileData, loading: loadingProfile } = useApi(getProfile);
+    const { data: bookingsData, loading: loadingBookings } = useApi(getMyBookings);
+
+    const { execute: saveProfile, loading: savingProfile, error: saveError } = useMutation(updateProfile);
+    const { execute: savePw,     loading: savingPw,      error: pwError    } = useMutation(changePassword);
+
+    const [name,  setName]  = useState('');
+    const [email, setEmail] = useState('');
+    const [profileMsg, setProfileMsg] = useState(null); // {type: 'success'|'error', text}
+
+    const [curPw,  setCurPw]  = useState('');
+    const [newPw,  setNewPw]  = useState('');
+    const [cnfPw,  setCnfPw]  = useState('');
+    const [pwMsg,  setPwMsg]  = useState(null);
+
+    useEffect(() => {
+        if (profileData?.data) {
+            setName(profileData.data.name || '');
+            setEmail(profileData.data.email || '');
+        }
+    }, [profileData]);
+
+    const handleSaveProfile = async (e) => {
         e.preventDefault();
-        setSaving(true);
-        try {
-            const payload = { name: form.name, email: form.email };
-            if (form.newPassword) {
-                payload.currentPassword = form.currentPassword;
-                payload.newPassword = form.newPassword;
-            }
-            const res = await api.put('/auth/updatedetails', payload);
-            setUser(res.data.data);
-            setMessage({ text: 'Profile updated successfully!', type: 'success' });
-            setForm(prev => ({ ...prev, currentPassword: '', newPassword: '' }));
-        } catch (err) {
-            setMessage({ text: err.response?.data?.message || 'Update failed. Please try again.', type: 'error' });
-        } finally {
-            setSaving(false);
-            setTimeout(() => setMessage({ text: '', type: '' }), 4000);
+        const res = await saveProfile({ name, email });
+        if (res) {
+            setProfileMsg({ type: 'success', text: 'Profile updated successfully' });
+            setTimeout(() => setProfileMsg(null), 3500);
+        } else {
+            setProfileMsg({ type: 'error', text: saveError || 'Failed to save changes' });
         }
     };
 
-    const handleLogout = () => {
-        logout();
-        navigate('/');
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        if (newPw !== cnfPw) {
+            setPwMsg({ type: 'error', text: 'New passwords do not match' });
+            return;
+        }
+        if (newPw.length < 6) {
+            setPwMsg({ type: 'error', text: 'Password must be at least 6 characters' });
+            return;
+        }
+        const res = await savePw({ currentPassword: curPw, newPassword: newPw });
+        if (res) {
+            setPwMsg({ type: 'success', text: 'Password changed successfully' });
+            setCurPw(''); setNewPw(''); setCnfPw('');
+            setTimeout(() => setPwMsg(null), 3500);
+        } else {
+            setPwMsg({ type: 'error', text: pwError || 'Failed to change password' });
+        }
     };
 
-    const initials = user.name
-        ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-        : 'U';
+    const tabs = [
+        { id: 'personal', label: 'Personal Info', icon: User },
+        { id: 'security', label: 'Security',      icon: Shield },
+        { id: 'history',  label: 'Booking History', icon: History },
+    ];
+
+    const bookings = bookingsData?.data || [];
+
+    const Msg = ({ msg }) => msg ? (
+        <div className={`flex items-center gap-2 text-sm rounded-xl px-3 py-2.5 border
+            ${msg.type === 'success'
+                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                : 'text-red-400 bg-red-500/10 border-red-500/20'}`}>
+            {msg.type === 'success' ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+            {msg.text}
+        </div>
+    ) : null;
 
     return (
-        <div className="animate-fade-in min-h-screen pb-20 relative overflow-hidden">
-            <div className="absolute top-[-5%] right-[-5%] w-[500px] h-[500px] bg-accent/10 blur-[150px] rounded-full -z-10" />
-            <div className="absolute bottom-[10%] left-[-5%] w-[400px] h-[400px] bg-primary/5 blur-[100px] rounded-full -z-10" />
+        <div className="space-y-6">
+            <div>
+                <h1 className="text-xl font-bold text-white">Profile</h1>
+                <p className="text-slate-500 text-sm mt-1">Manage your account settings</p>
+            </div>
 
-            <div className="container mx-auto px-4 pt-52">
-                <div className="max-w-2xl mx-auto">
-                    {/* Header */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center justify-between mb-12"
-                    >
-                        <div>
-                            <h1 className="text-5xl font-black tracking-tighter mb-2">
-                                My <span className="gradient-text">Profile</span>
-                            </h1>
-                            <p className="text-text-muted font-medium">Manage your account details</p>
-                        </div>
-                        <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-error/10 hover:bg-error/20 text-error border border-error/20 font-bold transition-all text-sm"
-                        >
-                            <LogOut size={16} /> Logout
-                        </button>
-                    </motion.div>
-
-                    {/* Avatar Card */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="glass-card p-8 mb-6 flex items-center gap-6"
-                    >
-                        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-2xl font-black text-white shrink-0 shadow-lg shadow-primary/20">
-                            {initials}
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-black">{user.name}</h2>
-                            <p className="text-text-muted font-medium">{user.email}</p>
-                            {user.role && (
-                                <span className="mt-2 inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary font-black uppercase tracking-widest">
-                                    <ShieldCheck size={12} /> {user.role}
-                                </span>
-                            )}
-                        </div>
-                    </motion.div>
-
-                    {/* Message Banner */}
-                    {message.text && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={`mb-6 px-6 py-4 rounded-2xl flex items-center gap-3 font-bold border ${message.type === 'success'
-                                ? 'bg-success/10 text-success border-success/20'
-                                : 'bg-error/10 text-error border-error/20'
-                                }`}
-                        >
-                            {message.type === 'success' ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}
-                            {message.text}
-                        </motion.div>
-                    )}
-
-                    {/* Edit Form */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="glass-card p-8"
-                    >
-                        <h3 className="text-xl font-black mb-8 flex items-center gap-3">
-                            <Edit3 size={20} className="text-primary" /> Edit Details
-                        </h3>
-
-                        <form onSubmit={handleSave} className="space-y-6">
-                            {/* Name */}
-                            <div>
-                                <label className="block text-xs font-black uppercase tracking-widest text-text-muted mb-2">
-                                    Full Name
-                                </label>
-                                <div className="relative">
-                                    <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        value={form.name}
-                                        onChange={handleChange}
-                                        required
-                                        placeholder="Your full name"
-                                        className="w-full bg-white/5 border border-white/10 focus:border-primary/50 focus:outline-none rounded-2xl pl-12 pr-5 py-4 font-medium text-white placeholder:text-text-muted transition-colors"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Email */}
-                            <div>
-                                <label className="block text-xs font-black uppercase tracking-widest text-text-muted mb-2">
-                                    Email Address
-                                </label>
-                                <div className="relative">
-                                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={form.email}
-                                        onChange={handleChange}
-                                        required
-                                        placeholder="your@email.com"
-                                        className="w-full bg-white/5 border border-white/10 focus:border-primary/50 focus:outline-none rounded-2xl pl-12 pr-5 py-4 font-medium text-white placeholder:text-text-muted transition-colors"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="border-t border-white/5 pt-6">
-                                <p className="text-xs font-black uppercase tracking-widest text-text-muted mb-4">
-                                    Change Password <span className="normal-case font-normal">(leave blank to keep current)</span>
-                                </p>
-
-                                {/* Current Password */}
-                                <div className="mb-4">
-                                    <div className="relative">
-                                        <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
-                                        <input
-                                            type="password"
-                                            name="currentPassword"
-                                            value={form.currentPassword}
-                                            onChange={handleChange}
-                                            placeholder="Current password"
-                                            className="w-full bg-white/5 border border-white/10 focus:border-primary/50 focus:outline-none rounded-2xl pl-12 pr-5 py-4 font-medium text-white placeholder:text-text-muted transition-colors"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* New Password */}
-                                <div className="relative">
-                                    <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
-                                    <input
-                                        type="password"
-                                        name="newPassword"
-                                        value={form.newPassword}
-                                        onChange={handleChange}
-                                        placeholder="New password"
-                                        className="w-full bg-white/5 border border-white/10 focus:border-primary/50 focus:outline-none rounded-2xl pl-12 pr-5 py-4 font-medium text-white placeholder:text-text-muted transition-colors"
-                                    />
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-3 mt-2"
-                            >
-                                {saving ? <><Loader2 size={20} className="animate-spin" /> Saving...</> : <><CheckCircle2 size={20} /> Save Changes</>}
-                            </button>
-                        </form>
-                    </motion.div>
+            {/* Profile header */}
+            <div className="bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-6 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-600 to-indigo-600
+                                flex items-center justify-center text-white text-2xl font-bold shrink-0">
+                    {name ? name.charAt(0).toUpperCase() : <User size={24} />}
+                </div>
+                <div>
+                    <p className="text-base font-semibold text-white">{name || '—'}</p>
+                    <p className="text-slate-500 text-sm">{email || '—'}</p>
                 </div>
             </div>
+
+            {/* Tabs */}
+            <div className="flex gap-1 bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-1.5">
+                {tabs.map(({ id, label, icon: Icon }) => (
+                    <button key={id} onClick={() => setActiveTab(id)}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-sm
+                                    font-medium transition-all
+                                    ${activeTab === id
+                                        ? 'bg-primary-600 text-white shadow'
+                                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'}`}>
+                        <Icon size={14} /> {label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Tab content */}
+            {activeTab === 'personal' && (
+                <div className="bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-6 space-y-5">
+                    <Msg msg={profileMsg} />
+                    <form onSubmit={handleSaveProfile} className="space-y-4">
+                        <InputField label="Full Name" value={name} onChange={(e) => setName(e.target.value)}
+                            placeholder="Your name" disabled={loadingProfile} />
+                        <InputField label="Email Address" type="email" value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@example.com" disabled={loadingProfile} />
+                        <button type="submit" disabled={savingProfile || loadingProfile}
+                            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-600
+                                       hover:bg-primary-500 text-white text-sm font-medium
+                                       disabled:opacity-50 transition-colors">
+                            {savingProfile ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                            Save Changes
+                        </button>
+                    </form>
+                </div>
+            )}
+
+            {activeTab === 'security' && (
+                <div className="bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-6 space-y-5">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Lock size={16} className="text-primary-400" />
+                        <h2 className="text-base font-semibold text-white">Change Password</h2>
+                    </div>
+                    <Msg msg={pwMsg} />
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                        <InputField label="Current Password" type="password" value={curPw}
+                            onChange={(e) => setCurPw(e.target.value)} placeholder="••••••••" />
+                        <InputField label="New Password" type="password" value={newPw}
+                            onChange={(e) => setNewPw(e.target.value)} placeholder="••••••••" />
+                        <InputField label="Confirm New Password" type="password" value={cnfPw}
+                            onChange={(e) => setCnfPw(e.target.value)} placeholder="••••••••" />
+                        <button type="submit" disabled={savingPw || !curPw || !newPw || !cnfPw}
+                            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-600
+                                       hover:bg-primary-500 text-white text-sm font-medium
+                                       disabled:opacity-50 transition-colors">
+                            {savingPw ? <Loader2 size={15} className="animate-spin" /> : <Lock size={15} />}
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+            )}
+
+            {activeTab === 'history' && (
+                <div className="bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-6 space-y-4">
+                    <h2 className="text-base font-semibold text-white">Booking History</h2>
+                    {loadingBookings && (
+                        <div className="flex items-center gap-2 text-slate-500 text-sm py-6">
+                            <Loader2 size={16} className="animate-spin" /> Loading…
+                        </div>
+                    )}
+                    {!loadingBookings && bookings.length === 0 && (
+                        <p className="text-slate-500 text-sm py-6 text-center">No bookings yet</p>
+                    )}
+                    <div className="space-y-2">
+                        {bookings.map((b) => (
+                            <div key={b._id}
+                                className="flex items-center justify-between px-4 py-3 rounded-xl
+                                           bg-white/[0.025] border border-white/[0.04] gap-3">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-medium text-white truncate">{b.event?.title || 'Event'}</p>
+                                    <p className="text-[11px] text-slate-600 mt-0.5">{formatDate(b.event?.date)}</p>
+                                </div>
+                                <span className={`text-xs font-semibold shrink-0 ${statusVariant(b)}`}>
+                                    {statusLabel(b)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
-};
-
-export default Profile;
+}

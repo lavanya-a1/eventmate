@@ -1,220 +1,198 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import api from '../api/axios';
-import { useAuth } from '../context/AuthContext';
+﻿import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-    Calendar, MapPin, Ticket, ArrowRight, Loader2,
-    CheckCircle2, AlertCircle, Clock, PackageOpen, XCircle
+    Ticket, Calendar, Download, XCircle,
+    Clock, ExternalLink, Loader2, AlertCircle, RefreshCw,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Card, Button, Badge, cn } from '../components/ui';
+import { useApi } from '../hooks/useApi';
+import { getMyBookings, cancelBooking } from '../api/bookings';
 
-const MyBookings = () => {
-    const { user } = useAuth();
-    const [bookings, setBookings] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [cancelling, setCancelling] = useState(null);
-    const [message, setMessage] = useState({ text: '', type: '' });
-    const [filter, setFilter] = useState('all'); // 'all' | 'upcoming' | 'past'
+const statusDisplay = (booking) => {
+    if (booking.status === 'cancelled') return { label: 'Cancelled', variant: 'danger' };
+    if (booking.status === 'pending')   return { label: 'Pending',   variant: 'warning' };
+    const now = new Date();
+    const eventDate = booking.event?.date ? new Date(booking.event.date) : null;
+    if (eventDate && eventDate <= now)  return { label: 'Completed', variant: 'success' };
+    return { label: 'Upcoming', variant: 'primary' };
+};
 
-    const fetchBookings = async () => {
-        try {
-            const res = await api.get('/bookings/me');
-            setBookings(res.data.data || []);
-        } catch (err) {
-            console.error('Failed to fetch bookings:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+export default function MyBookings() {
+    const navigate = useNavigate();
+    const { data, loading, error, refetch } = useApi(getMyBookings);
+    const [cancelling, setCancelling] = useState(null); // bookingId being cancelled
+    const [cancelError, setCancelError] = useState(null);
 
-    useEffect(() => { fetchBookings(); }, []);
+    const bookings = data?.data || [];
+
+    const formatDate = (d) =>
+        d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+    const formatTime = (d) =>
+        d ? new Date(d).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
 
     const handleCancel = async (bookingId) => {
+        if (!window.confirm('Cancel this booking?')) return;
         setCancelling(bookingId);
+        setCancelError(null);
         try {
-            await api.delete(`/bookings/${bookingId}`);
-            setMessage({ text: 'Booking cancelled successfully.', type: 'success' });
-            fetchBookings();
+            await cancelBooking(bookingId);
+            refetch();
         } catch (err) {
-            setMessage({ text: err.response?.data?.message || 'Cancellation failed.', type: 'error' });
+            setCancelError(err?.message || 'Failed to cancel booking');
         } finally {
             setCancelling(null);
-            setTimeout(() => setMessage({ text: '', type: '' }), 4000);
         }
     };
 
-    const now = new Date();
-    const filtered = bookings.filter(b => {
-        if (!b.event) return false;
-        const eventDate = new Date(b.event.date);
-        if (filter === 'upcoming') return eventDate > now && b.status === 'confirmed';
-        if (filter === 'past') return eventDate <= now || b.status === 'cancelled';
-        return true;
-    });
+    if (loading) return (
+        <div className="flex items-center justify-center py-24 text-slate-500">
+            <Loader2 size={20} className="animate-spin mr-2" /> Loading bookings…
+        </div>
+    );
 
-    const tabs = ['all', 'upcoming', 'past'];
+    if (error) return (
+        <div className="flex flex-col items-center gap-4 py-24 text-slate-500">
+            <AlertCircle size={24} className="text-red-400" />
+            <p className="text-sm text-red-400">{error}</p>
+            <button onClick={refetch}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10
+                           text-white text-sm transition-colors">
+                <RefreshCw size={14} /> Retry
+            </button>
+        </div>
+    );
 
     return (
-        <div className="animate-fade-in min-h-screen pb-20 relative overflow-hidden">
-            <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-secondary/10 blur-[150px] rounded-full -z-10" />
-
-            <div className="container mx-auto px-4 pt-52">
-                {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-12"
-                >
-                    <h1 className="text-5xl md:text-6xl font-black tracking-tighter mb-3">
-                        My <span className="gradient-text">Bookings</span>
-                    </h1>
-                    <p className="text-text-muted font-medium text-lg">
-                        {user ? `Hello, ${user.name.split(' ')[0]}! Here are all your registrations.` : 'All your event registrations in one place.'}
+        <div className="space-y-6 pb-16">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-xl font-bold text-white tracking-tight">My Bookings</h1>
+                    <p className="text-slate-500 text-sm mt-1">
+                        {bookings.length} booking{bookings.length !== 1 ? 's' : ''} total
                     </p>
-                </motion.div>
-
-                {/* Message Banner */}
-                <AnimatePresence>
-                    {message.text && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className={`mb-8 px-6 py-4 rounded-2xl flex items-center gap-3 font-bold border ${message.type === 'success'
-                                ? 'bg-success/10 text-success border-success/20'
-                                : 'bg-error/10 text-error border-error/20'
-                                }`}
-                        >
-                            {message.type === 'success' ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}
-                            {message.text}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Filter Tabs */}
-                <div className="flex gap-2 mb-10">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab}
-                            onClick={() => setFilter(tab)}
-                            className={`px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-wider transition-all ${filter === tab
-                                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                : 'bg-white/5 text-text-muted hover:bg-white/10'
-                                }`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
                 </div>
+                <button onClick={() => navigate('/browse')}
+                    className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm
+                               font-medium transition-colors shadow-md shadow-primary-900/30">
+                    Browse Events
+                </button>
+            </div>
 
-                {/* Content */}
-                {loading ? (
-                    <div className="flex items-center justify-center py-32">
-                        <Loader2 size={48} className="animate-spin text-primary" />
-                    </div>
-                ) : filtered.length === 0 ? (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="glass-card border-dashed text-center py-24 flex flex-col items-center gap-6"
-                    >
-                        <PackageOpen size={64} className="text-text-muted opacity-20" />
-                        <h3 className="text-2xl font-bold">No bookings found</h3>
-                        <p className="text-text-muted">
-                            {filter === 'upcoming' ? 'No upcoming events.' : filter === 'past' ? 'No past events.' : "You haven't registered for any events yet."}
-                        </p>
-                        <Link to="/events" className="btn-primary px-8 py-3 mt-2">Browse Events</Link>
-                    </motion.div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {filtered.map((booking, index) => {
-                            const isPast = booking.event && new Date(booking.event.date) <= now;
-                            const isCancelled = booking.status === 'cancelled';
-                            return (
-                                <motion.div
-                                    key={booking._id}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.08, duration: 0.4 }}
-                                    className="group relative"
-                                >
-                                    <div className={`absolute inset-0 blur-xl -z-10 rounded-3xl transition-all duration-500 ${isCancelled ? 'bg-error/5' : isPast ? 'bg-white/5' : 'bg-secondary/5 group-hover:bg-secondary/10'
-                                        }`} />
-                                    <div className={`glass-card p-8 h-full flex flex-col transition-all ${isCancelled ? 'opacity-60' : isPast ? 'border-white/5' : 'hover:border-secondary/30'
-                                        }`}>
-                                        {/* Status badge */}
-                                        <div className="flex items-center justify-between mb-4">
-                                            <span className={`text-[10px] px-3 py-1 rounded-lg font-black uppercase tracking-widest border ${isCancelled
-                                                ? 'bg-error/10 text-error border-error/20'
-                                                : isPast
-                                                    ? 'bg-white/5 text-text-muted border-white/10'
-                                                    : 'bg-success/10 text-success border-success/20'
-                                                }`}>
-                                                {isCancelled ? 'Cancelled' : isPast ? 'Past' : 'Confirmed'}
-                                            </span>
-                                            {booking.event?.category && (
-                                                <span className="text-[10px] text-primary font-black opacity-60 uppercase tracking-widest">
-                                                    {booking.event.category}
+            {cancelError && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                    <AlertCircle size={14} /> {cancelError}
+                </div>
+            )}
+
+            {bookings.length === 0 ? (
+                <div className="py-20 text-center">
+                    <Ticket size={32} className="mx-auto text-slate-600 mb-4" />
+                    <p className="text-slate-400 font-medium">No bookings yet</p>
+                    <p className="text-slate-500 text-sm mt-1">Browse events and book your first ticket</p>
+                    <button onClick={() => navigate('/browse')}
+                        className="mt-4 text-sm text-primary-400 hover:text-primary-300 transition-colors font-medium">
+                        Browse Events →
+                    </button>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {bookings.map((booking) => {
+                        const ev = booking.event || {};
+                        const { label: statusLabel, variant: statusVariant } = statusDisplay(booking);
+                        const isUpcoming  = statusLabel === 'Upcoming' || statusLabel === 'Pending';
+                        const isCompleted = statusLabel === 'Completed';
+                        const isCancelling = cancelling === booking._id;
+
+                        return (
+                            <Card key={booking._id}
+                                className="p-0 border-white/[0.06] hover:border-white/10 transition-colors overflow-hidden">
+                                <div className="flex flex-col lg:flex-row">
+                                    {/* Event Image */}
+                                    <div className="flex flex-1 p-5 items-center gap-5">
+                                        {ev.image ? (
+                                            <img src={ev.image} alt={ev.title}
+                                                className="w-16 h-16 rounded-xl object-cover shrink-0 border border-white/10" />
+                                        ) : (
+                                            <div className="w-16 h-16 rounded-xl bg-primary-900/30 flex items-center
+                                                            justify-center shrink-0 border border-white/10">
+                                                <Ticket size={22} className="text-primary-500" />
+                                            </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                <span className="text-[10px] font-bold text-slate-600 tracking-widest uppercase">
+                                                    #{booking._id?.slice(-8).toUpperCase()}
                                                 </span>
-                                            )}
-                                        </div>
-
-                                        <h3 className="text-xl font-bold mb-4 line-clamp-2 leading-tight">
-                                            {booking.event?.title || 'Event Unavailable'}
-                                        </h3>
-
-                                        <div className="space-y-3 mb-6">
-                                            {booking.event?.date && (
-                                                <div className="flex items-center gap-3 text-text-muted text-sm font-medium">
-                                                    <Calendar size={16} className="text-secondary shrink-0" />
-                                                    {new Date(booking.event.date).toLocaleDateString('en-US', {
-                                                        weekday: 'short', month: 'long', day: 'numeric', year: 'numeric'
-                                                    })}
+                                                <Badge variant={statusVariant}>{statusLabel}</Badge>
+                                            </div>
+                                            <h3 className="text-base font-semibold text-white truncate">
+                                                {ev.title || 'Event'}
+                                            </h3>
+                                            <div className="flex flex-wrap items-center gap-4 mt-2">
+                                                <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+                                                    <Calendar size={12} className="text-primary-500" />
+                                                    {formatDate(ev.date)}
                                                 </div>
-                                            )}
-                                            {booking.event?.location && (
-                                                <div className="flex items-center gap-3 text-text-muted text-sm font-medium">
-                                                    <MapPin size={16} className="text-accent shrink-0" />
-                                                    {booking.event.location}
+                                                <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+                                                    <Clock size={12} className="text-indigo-500" />
+                                                    {formatTime(ev.date)}
                                                 </div>
-                                            )}
-                                            <div className="flex items-center gap-3 text-text-muted text-sm font-medium">
-                                                <Clock size={16} className="text-primary shrink-0" />
-                                                Booked {new Date(booking.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+                                                    <Ticket size={12} className="text-emerald-500" />
+                                                    {booking.seats} seat{booking.seats !== 1 ? 's' : ''}
+                                                </div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div className="mt-auto pt-6 border-t border-white/5 flex gap-3">
-                                            {booking.event?._id && (
-                                                <Link
-                                                    to={`/event/${booking.event._id}`}
-                                                    className="flex-1 py-3 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center gap-2 font-bold text-sm transition-all"
-                                                >
-                                                    <Ticket size={16} /> View
-                                                    <ArrowRight size={14} />
-                                                </Link>
-                                            )}
-                                            {!isCancelled && !isPast && (
+                                    {/* Actions */}
+                                    <div className="lg:w-64 bg-white/[0.02] border-t lg:border-t-0 lg:border-l
+                                                    border-white/[0.05] p-5 flex flex-col justify-center gap-3">
+                                        <div className="text-right lg:text-right">
+                                            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Amount</p>
+                                            <p className="text-lg font-bold text-white">
+                                                {ev.price != null ? `$${ev.price}.00` : '—'}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-row lg:flex-col gap-2">
+                                            <button
+                                                onClick={() => navigate(`/tickets?bookingId=${booking._id}`)}
+                                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg
+                                                           bg-primary-600 hover:bg-primary-500 text-white text-xs font-medium
+                                                           transition-colors">
+                                                <Download size={14} /> E-Ticket
+                                            </button>
+                                            {isUpcoming && (
                                                 <button
                                                     onClick={() => handleCancel(booking._id)}
-                                                    disabled={cancelling === booking._id}
-                                                    className="px-4 py-3 rounded-2xl bg-error/10 hover:bg-error/20 text-error border border-error/20 flex items-center justify-center gap-2 font-bold text-sm transition-all"
-                                                >
-                                                    {cancelling === booking._id
-                                                        ? <Loader2 size={16} className="animate-spin" />
-                                                        : <XCircle size={16} />}
+                                                    disabled={isCancelling}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg
+                                                               border border-red-500/20 hover:bg-red-500/10 text-red-400
+                                                               text-xs font-medium transition-colors disabled:opacity-50">
+                                                    {isCancelling
+                                                        ? <Loader2 size={14} className="animate-spin" />
+                                                        : <XCircle size={14} />
+                                                    }
+                                                    Cancel
+                                                </button>
+                                            )}
+                                            {isCompleted && (
+                                                <button
+                                                    onClick={() => navigate('/feedback')}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg
+                                                               border border-white/[0.06] hover:bg-white/5 text-slate-400
+                                                               hover:text-white text-xs font-medium transition-colors">
+                                                    <ExternalLink size={14} /> Feedback
                                                 </button>
                                             )}
                                         </div>
                                     </div>
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
+                                </div>
+                            </Card>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
-};
-
-export default MyBookings;
+}
