@@ -58,7 +58,7 @@ const MyBookings = () => {
         <div className="animate-fade-in min-h-screen pb-20 relative overflow-hidden">
             <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-secondary/10 blur-[150px] rounded-full -z-10" />
 
-            <div className="container mx-auto px-4 pt-12">
+            <div className="container mx-auto px-4 pt-52">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -81,8 +81,8 @@ const MyBookings = () => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             className={`mb-8 px-6 py-4 rounded-2xl flex items-center gap-3 font-bold border ${message.type === 'success'
-                                    ? 'bg-success/10 text-success border-success/20'
-                                    : 'bg-error/10 text-error border-error/20'
+                                ? 'bg-success/10 text-success border-success/20'
+                                : 'bg-error/10 text-error border-error/20'
                                 }`}
                         >
                             {message.type === 'success' ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}
@@ -98,8 +98,8 @@ const MyBookings = () => {
                             key={tab}
                             onClick={() => setFilter(tab)}
                             className={`px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-wider transition-all ${filter === tab
-                                    ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                    : 'bg-white/5 text-text-muted hover:bg-white/10'
+                                ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                : 'bg-white/5 text-text-muted hover:bg-white/10'
                                 }`}
                         >
                             {tab}
@@ -145,10 +145,10 @@ const MyBookings = () => {
                                         {/* Status badge */}
                                         <div className="flex items-center justify-between mb-4">
                                             <span className={`text-[10px] px-3 py-1 rounded-lg font-black uppercase tracking-widest border ${isCancelled
-                                                    ? 'bg-error/10 text-error border-error/20'
-                                                    : isPast
-                                                        ? 'bg-white/5 text-text-muted border-white/10'
-                                                        : 'bg-success/10 text-success border-success/20'
+                                                ? 'bg-error/10 text-error border-error/20'
+                                                : isPast
+                                                    ? 'bg-white/5 text-text-muted border-white/10'
+                                                    : 'bg-success/10 text-success border-success/20'
                                                 }`}>
                                                 {isCancelled ? 'Cancelled' : isPast ? 'Past' : 'Confirmed'}
                                             </span>

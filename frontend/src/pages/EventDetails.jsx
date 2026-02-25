@@ -83,7 +83,7 @@ const EventDetails = () => {
             <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-primary/10 blur-[150px] rounded-full -z-10" />
             <div className="absolute bottom-[10%] left-[-5%] w-[400px] h-[400px] bg-accent/5 blur-[100px] rounded-full -z-10" />
 
-            <div className="container mx-auto px-4 pt-10">
+            <div className="container mx-auto px-4 pt-52">
                 {/* Back button */}
                 <motion.button
                     initial={{ opacity: 0, x: -20 }}
@@ -102,8 +102,8 @@ const EventDetails = () => {
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={`mb-8 px-6 py-4 rounded-2xl flex items-center gap-3 font-bold border ${message.type === 'success'
-                                    ? 'bg-success/10 text-success border-success/20'
-                                    : 'bg-error/10 text-error border-error/20'
+                                ? 'bg-success/10 text-success border-success/20'
+                                : 'bg-error/10 text-error border-error/20'
                                 }`}
                         >
                             {message.type === 'success' ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}
@@ -172,7 +172,7 @@ const EventDetails = () => {
                                 <div>
                                     <p className="text-[10px] text-text-muted uppercase font-black tracking-widest mb-1">Seats Left</p>
                                     <p className={`font-bold text-sm ${isFull ? 'text-error' : 'text-success'}`}>
-                                        {event.availableSeats ?? 0} / {event.capacity ?? 0}
+                                        {event.availableSeats ?? 0}
                                     </p>
                                 </div>
                             </div>
@@ -183,10 +183,10 @@ const EventDetails = () => {
                             onClick={handleBook}
                             disabled={booking || isBooked || isFull || isPast}
                             className={`w-full sm:w-auto px-10 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all text-lg ${isBooked
-                                    ? 'bg-success/10 text-success border border-success/20 cursor-default'
-                                    : isFull || isPast
-                                        ? 'bg-white/5 text-text-muted cursor-not-allowed border border-white/10'
-                                        : 'btn-primary'
+                                ? 'bg-success/10 text-success border border-success/20 cursor-default'
+                                : isFull || isPast
+                                    ? 'bg-white/5 text-text-muted cursor-not-allowed border border-white/10'
+                                    : 'btn-primary'
                                 }`}
                         >
                             {booking ? (

@@ -42,9 +42,6 @@ const Navbar = () => {
 
                 {/* Navigation Links */}
                 <div className="hidden md:flex items-center gap-10">
-                    <Link to="/" className="text-sm font-bold text-text-muted hover:text-white transition-colors">About</Link>
-                    <Link to="/events" className="text-sm font-bold text-text-muted hover:text-white transition-colors">Explore</Link>
-
                     {user ? (
                         <div className="relative" ref={profileMenuRef}>
                             <button
@@ -54,7 +51,7 @@ const Navbar = () => {
                                 <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center">
                                     <User size={16} className="text-primary" />
                                 </div>
-                                <span className="text-sm font-bold">{user.name.split(' ')[0]}</span>
+                                <span className="text-sm font-bold">{user?.name?.split(' ')[0] || 'User'}</span>
                                 <ChevronDown size={14} className={`text-text-muted transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                             </button>
 

@@ -65,7 +65,7 @@ const Profile = () => {
             <div className="absolute top-[-5%] right-[-5%] w-[500px] h-[500px] bg-accent/10 blur-[150px] rounded-full -z-10" />
             <div className="absolute bottom-[10%] left-[-5%] w-[400px] h-[400px] bg-primary/5 blur-[100px] rounded-full -z-10" />
 
-            <div className="container mx-auto px-4 pt-12">
+            <div className="container mx-auto px-4 pt-52">
                 <div className="max-w-2xl mx-auto">
                     {/* Header */}
                     <motion.div
@@ -114,8 +114,8 @@ const Profile = () => {
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={`mb-6 px-6 py-4 rounded-2xl flex items-center gap-3 font-bold border ${message.type === 'success'
-                                    ? 'bg-success/10 text-success border-success/20'
-                                    : 'bg-error/10 text-error border-error/20'
+                                ? 'bg-success/10 text-success border-success/20'
+                                : 'bg-error/10 text-error border-error/20'
                                 }`}
                         >
                             {message.type === 'success' ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}

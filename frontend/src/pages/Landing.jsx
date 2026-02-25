@@ -50,6 +50,11 @@ const Landing = () => {
         }
     };
 
+    const handleGoogleLogin = () => {
+        // Implement Google Login logic here
+        window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`;
+    };
+
     const handleInputChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -187,6 +192,7 @@ const Landing = () => {
                                     {isLogin && (
                                         <button
                                             type="button"
+                                            onClick={() => navigate('/forgot-password')}
                                             className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-[0.2em] text-text-muted/40 hover:text-primary transition-all"
                                         >
                                             Forgot?
@@ -207,25 +213,21 @@ const Landing = () => {
                                 </button>
                             </form>
 
-                            <div className="my-16 flex items-center justify-center gap-8">
-                                <button className="p-5 bg-white/[0.03] rounded-full hover:bg-white/[0.08] transition-all active:scale-[0.9] text-text-muted hover:text-white border-none">
-                                    <Chrome size={22} />
-                                </button>
-                                <button className="p-5 bg-white/[0.03] rounded-full hover:bg-white/[0.08] transition-all active:scale-[0.9] text-text-muted hover:text-white border-none">
-                                    <span className="text-2xl leading-none font-light"></span>
+                            <div className="my-16 flex items-center justify-center">
+                                <button
+                                    onClick={handleGoogleLogin}
+                                    className="p-6 bg-white/[0.03] rounded-full hover:bg-white/[0.08] transition-all active:scale-[0.9] text-text-muted hover:text-white border-none"
+                                >
+                                    <Chrome size={24} />
                                 </button>
                             </div>
 
                             <p className="mt-12 text-center text-[10px] text-text-muted font-black uppercase tracking-[0.3em] opacity-40">
-                                {isLogin ? "New here?" : "Member?"}{' '}
                                 <button
-                                    onClick={() => {
-                                        setIsLogin(!isLogin);
-                                        navigate(isLogin ? '/register' : '/login');
-                                    }}
-                                    className="text-primary hover:text-primary-light transition-colors ml-3 underline underline-offset-8 decoration-primary/20"
+                                    onClick={handleGoogleLogin}
+                                    className="text-primary hover:text-primary-light transition-colors underline underline-offset-8 decoration-primary/20"
                                 >
-                                    {isLogin ? 'Create Workspace' : 'Sign In'}
+                                    Continue with google account
                                 </button>
                             </p>
                         </motion.div>
