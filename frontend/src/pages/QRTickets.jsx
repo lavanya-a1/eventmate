@@ -17,7 +17,7 @@ export default function QRTickets() {
     const { data, loading, error } = useApi(getMyBookings);
     const ticketRef = useRef(null);
 
-    const bookings = (data?.data || []).filter((b) => b.status !== 'cancelled');
+    const bookings = (data?.data || []).filter((b) => b.status === 'confirmed');
 
     // Default to bookingId from URL, otherwise first booking
     const initialId = searchParams.get('bookingId');

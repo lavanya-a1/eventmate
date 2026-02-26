@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Ticket, Calendar, Download, XCircle,
-    Clock, ExternalLink, Loader2, AlertCircle, RefreshCw,
+    Clock, ExternalLink, Loader2, AlertCircle, RefreshCw, CreditCard,
 } from 'lucide-react';
 import { Card, Button, Badge, cn } from '../components/ui';
 import { useApi } from '../hooks/useApi';
 import { getMyBookings, cancelBooking } from '../api/bookings';
+import { simulatePayment } from '../api/payments';
 
 const statusDisplay = (booking) => {
     if (booking.status === 'cancelled') return { label: 'Cancelled', variant: 'danger' };
@@ -22,6 +23,9 @@ export default function MyBookings() {
     const { data, loading, error, refetch } = useApi(getMyBookings);
     const [cancelling, setCancelling] = useState(null); // bookingId being cancelled
     const [cancelError, setCancelError] = useState(null);
+    const [payingId, setPayingId] = useState(null);
+    const [paymentError, setPaymentError] = useState(null);
+    const [paymentSuccess, setPaymentSuccess] = useState(null);
 
     const bookings = data?.data || [];
 
@@ -41,6 +45,26 @@ export default function MyBookings() {
             setCancelError(err?.message || 'Failed to cancel booking');
         } finally {
             setCancelling(null);
+        }
+    };
+
+    const handlePayment = async (bookingId, method) => {
+        setPayingId(bookingId);
+        setPaymentError(null);
+        setPaymentSuccess(null);
+        try {
+            await simulatePayment(bookingId, method);
+            setPaymentSuccess('Payment simulated successfully. Booking confirmed.');
+            await refetch();
+        } catch (err) {
+            const msg = err?.response?.data?.message || err?.message || 'Payment simulation failed';
+            setPaymentError(msg);
+        } finally {
+            setPayingId(null);
+            setTimeout(() => {
+                setPaymentError(null);
+                setPaymentSuccess(null);
+            }, 4000);
         }
     };
 
@@ -78,9 +102,23 @@ export default function MyBookings() {
                 </button>
             </div>
 
-            {cancelError && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-                    <AlertCircle size={14} /> {cancelError}
+            {(cancelError || paymentError || paymentSuccess) && (
+                <div className="space-y-2">
+                    {cancelError && (
+                        <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                            <AlertCircle size={14} /> {cancelError}
+                        </div>
+                    )}
+                    {paymentError && (
+                        <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                            <AlertCircle size={14} /> {paymentError}
+                        </div>
+                    )}
+                    {paymentSuccess && (
+                        <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+                            <AlertCircle size={14} /> {paymentSuccess}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -162,6 +200,19 @@ export default function MyBookings() {
                                                            transition-colors">
                                                 <Download size={14} /> E-Ticket
                                             </button>
+                                            {booking.status === 'pending' && (
+                                                <button
+                                                    onClick={() => handlePayment(booking._id, 'Card')}
+                                                    disabled={payingId === booking._id}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg
+                                                               border border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-400
+                                                               text-xs font-medium transition-colors disabled:opacity-50">
+                                                    {payingId === booking._id
+                                                        ? <Loader2 size={14} className="animate-spin" />
+                                                        : <CreditCard size={14} />}
+                                                    Pay (Simulated)
+                                                </button>
+                                            )}
                                             {isUpcoming && (
                                                 <button
                                                     onClick={() => handleCancel(booking._id)}
