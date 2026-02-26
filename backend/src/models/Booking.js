@@ -24,6 +24,20 @@ const BookingSchema = new mongoose.Schema({
     min: 1,
     default: 1,
   },
+  amount: {
+    type: Number,
+    default: 0,
+  },
+  qrCode: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
+  checkedIn: {
+    type: Boolean,
+    default: false,
+  },
+  checkedInAt: Date,
 }, { timestamps: true });
 
 // Only one *active* booking per user/event.

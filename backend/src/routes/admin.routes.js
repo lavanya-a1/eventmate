@@ -1,108 +1,103 @@
-const express = require("express");
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const { protect } = require('../middleware/auth');
+const { isAdmin, logActivity } = require('../middleware/admin');
+const { validate } = require('../validations/adminValidation');
+const schemas = require('../validations/adminValidation');
+
+// Controllers
+const dashboardCtrl = require('../controllers/admin/dashboardController');
+const eventCtrl = require('../controllers/admin/adminEventController');
+const userCtrl = require('../controllers/admin/adminUserController');
+const bookingCtrl = require('../controllers/admin/adminBookingController');
+const paymentCtrl = require('../controllers/admin/adminPaymentController');
+const qrCtrl = require('../controllers/admin/adminQRController');
+const notifCtrl = require('../controllers/admin/adminNotificationController');
+const feedbackCtrl = require('../controllers/admin/adminFeedbackController');
+const logsCtrl = require('../controllers/admin/adminLogController');
+const settingsCtrl = require('../controllers/admin/adminSettingsController');
+
+
 const router = express.Router();
-const User = require("../models/User");
-const Event = require("../models/Event");
-const Booking = require("../models/Booking");
-const protect = require("../middleware/auth");
-const role = require("../middleware/role");
-const isAdmin = role(["admin"]);
 
-// GET DASHBOARD STATS
+// ─── Multer (image uploads) ───────────────────────────────────────────────────
+const uploadDir = path.join(__dirname, '../../uploads/tmp');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-router.get("/dashboard", protect, isAdmin, async (req, res) => {
-  try {
-    const totalUsers = await User.countDocuments();
-    const totalEvents = await Event.countDocuments();
-    const totalBookings = await Booking.countDocuments();
-    const upcomingEvents = await Event.countDocuments({
-      date: { $gte: new Date() },
-    });
-
-    res.json({
-      totalUsers,
-      totalEvents,
-      totalBookings,
-      upcomingEvents,
-    });
-  } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
-  }
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname.replace(/\s/g, '_')}`),
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) return cb(new Error('Only image files are allowed'), false);
+    cb(null, true);
+  },
 });
 
-//Events per Category (Aggregation)
+// ─── Global admin middleware ──────────────────────────────────────────────────
+router.use(protect);
+router.use(isAdmin);
 
-router.get("/events-by-category", protect, isAdmin, async (req, res) => {
-  try {
-    const data = await Event.aggregate([
-      {
-        $group: {
-          _id: "$category",
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { count: -1 },
-      },
-    ]);
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+router.get('/dashboard', dashboardCtrl.getDashboard);
+router.get('/dashboard/activity', dashboardCtrl.getActivity);
 
-    res.json(data);
-  } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
-  }
-});
+// ─── Events ───────────────────────────────────────────────────────────────────
+router.get('/events', validate(schemas.listEvents, 'query'), eventCtrl.getEvents);
+router.get('/events/:id', eventCtrl.getEvent);
+router.post('/events', logActivity('Events'), upload.single('image'), validate(schemas.createEvent), eventCtrl.createEvent);
+router.put('/events/:id', logActivity('Events'), upload.single('image'), validate(schemas.updateEvent), eventCtrl.updateEvent);
+router.patch('/events/:id/status', logActivity('Events'), eventCtrl.toggleStatus);
+router.delete('/events/:id', logActivity('Events'), eventCtrl.deleteEvent);
 
-//Events Per Month
-router.get("/events-per-month", protect, isAdmin, async (req, res) => {
-  try {
-    const data = await Event.aggregate([
-      {
-        $group: {
-          _id: { $month: "$date" },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
+// ─── Users ────────────────────────────────────────────────────────────────────
+router.get('/users', validate(schemas.listUsers, 'query'), userCtrl.getUsers);
+router.get('/users/:id', userCtrl.getUser);
+router.get('/users/:id/bookings', userCtrl.getUserBookings);
+router.patch('/users/:id/role', logActivity('Users'), validate(schemas.updateUserRole), userCtrl.updateRole);
+router.patch('/users/:id/block', logActivity('Users'), userCtrl.toggleBlock);
+router.delete('/users/:id', logActivity('Users'), userCtrl.deleteUser);
 
-    res.json(data);
-  } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
-  }
-});
+// ─── Bookings ─────────────────────────────────────────────────────────────────
+router.get('/bookings', validate(schemas.listBookings, 'query'), bookingCtrl.getBookings);
+router.get('/bookings/export', bookingCtrl.exportBookings);
+router.get('/bookings/:id', bookingCtrl.getBooking);
+router.patch('/bookings/:id/cancel', logActivity('Bookings'), bookingCtrl.cancelBooking);
 
-//Top 5 Popular Events
-router.get("/top-events", protect, isAdmin, async (req, res) => {
-  try {
-    const data = await Booking.aggregate([
-      {
-        $group: {
-          _id: "$event",
-          totalBookings: { $sum: 1 },
-        },
-      },
-      { $sort: { totalBookings: -1 } },
-      { $limit: 5 },
-      {
-        $lookup: {
-          from: "events",
-          localField: "_id",
-          foreignField: "_id",
-          as: "eventDetails",
-        },
-      },
-      { $unwind: "$eventDetails" },
-    ]);
+// ─── Payments ─────────────────────────────────────────────────────────────────
+router.get('/payments', validate(schemas.listPayments, 'query'), paymentCtrl.getPayments);
+router.get('/payments/summary', paymentCtrl.getPaymentSummary);
+router.get('/payments/analytics', paymentCtrl.getRevenueAnalytics);
 
-    res.json(data);
-  } catch (error) {
-    res.status(500);
-    throw new Error(error.message);
-  }
-});
+// ─── QR / Attendance ──────────────────────────────────────────────────────────
+router.post('/qr/validate', logActivity('QR'), validate(schemas.validateQR), qrCtrl.validateQR);
+router.get('/qr/attendance/:eventId', qrCtrl.getAttendance);
 
+// ─── Notifications ────────────────────────────────────────────────────────────
+router.get('/notifications', notifCtrl.getNotifications);
+router.post('/notifications/broadcast', logActivity('Notifications'), validate(schemas.broadcastNotification), notifCtrl.broadcastNotification);
+router.post('/notifications/reminder', logActivity('Notifications'), validate(schemas.scheduleReminder), notifCtrl.scheduleReminder);
+router.delete('/notifications/:id', logActivity('Notifications'), notifCtrl.deleteNotification);
+
+// ─── Feedback ─────────────────────────────────────────────────────────────────
+router.get('/feedback', feedbackCtrl.getFeedback);
+router.get('/feedback/analytics', feedbackCtrl.getRatingAnalytics);
+router.patch('/feedback/:id/moderate', logActivity('Feedback'), validate(schemas.moderateFeedback), feedbackCtrl.moderateFeedback);
+router.delete('/feedback/:id', logActivity('Feedback'), feedbackCtrl.deleteFeedback);
+
+// ─── System Logs ──────────────────────────────────────────────────────────────
+router.get('/logs', logsCtrl.getLogs);
+router.delete('/logs', logActivity('Logs'), logsCtrl.clearLogs);
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+router.get('/settings/profile', settingsCtrl.getProfile);
+router.put('/settings/profile', validate(schemas.updateProfile), settingsCtrl.updateProfile);
+router.put('/settings/password', validate(schemas.changePassword), settingsCtrl.changePassword);
 
 module.exports = router;
 

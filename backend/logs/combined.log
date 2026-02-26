@@ -1,3 +1,58 @@
 {"code":11000,"index":0,"keyPattern":{"email":1},"keyValue":{"email":"a.lavanyaa99@gmail.com"},"level":"error","message":"E11000 duplicate key error collection: eventmate.users index: email_1 dup key: { email: \"a.lavanyaa99@gmail.com\" }","stack":"MongoServerError: E11000 duplicate key error collection: eventmate.users index: email_1 dup key: { email: \"a.lavanyaa99@gmail.com\" }\n    at C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\mongodb\\lib\\operations\\insert.js:50:33\n    at C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\mongodb\\lib\\operations\\command.js:84:64\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)","timestamp":"2026-02-22T15:38:31.406Z"}
 {"body":"{\\","expose":true,"level":"error","message":"Expected property name or '}' in JSON at position 1 (line 1 column 2)","stack":"SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)\n    at JSON.parse (<anonymous>)\n    at parse (C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\body-parser\\lib\\types\\json.js:92:19)\n    at C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\body-parser\\lib\\read.js:128:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n    at invokeCallback (C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\raw-body\\index.js:238:16)\n    at done (C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\raw-body\\index.js:227:7)\n    at IncomingMessage.onEnd (C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\raw-body\\index.js:287:7)\n    at IncomingMessage.emit (node:events:518:28)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","status":400,"statusCode":400,"timestamp":"2026-02-25T09:02:50.206Z","type":"entity.parse.failed"}
 {"body":"{email:info@eventmate.com, password:password123}","expose":true,"level":"error","message":"Expected property name or '}' in JSON at position 1 (line 1 column 2)","stack":"SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)\n    at JSON.parse (<anonymous>)\n    at parse (C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\body-parser\\lib\\types\\json.js:92:19)\n    at C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\body-parser\\lib\\read.js:128:18\n    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n    at invokeCallback (C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\raw-body\\index.js:238:16)\n    at done (C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\raw-body\\index.js:227:7)\n    at IncomingMessage.onEnd (C:\\Users\\adaba\\OneDrive\\pp\\eventmate\\backend\\node_modules\\raw-body\\index.js:287:7)\n    at IncomingMessage.emit (node:events:518:28)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)","status":400,"statusCode":400,"timestamp":"2026-02-25T09:03:38.426Z","type":"entity.parse.failed"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T15:55:00.025Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T15:55:00.043Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T15:55:10.040Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:00:00.080Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:00:00.082Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T16:00:10.097Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:05:00.029Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:05:00.035Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T16:05:10.064Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:10:00.041Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:10:00.053Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T16:10:10.057Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:15:00.053Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:15:00.055Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T16:15:10.072Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:20:00.025Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:20:00.027Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T16:20:10.047Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:35:00.022Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:35:00.032Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T16:35:10.046Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:40:00.022Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:40:00.039Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T16:40:10.035Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:45:00.021Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:45:00.021Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T16:45:10.159Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:55:00.030Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T16:55:00.046Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T16:55:10.107Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T17:00:00.031Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T17:00:00.048Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T17:00:10.043Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T17:05:00.049Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T17:05:00.065Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T17:05:10.058Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T17:10:00.023Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T17:10:00.083Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T17:10:10.095Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T17:15:00.038Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-25T17:15:00.040Z"}
+{"level":"error","message":"[Cron] scheduleReminderJob error: Operation `notifications.find()` buffering timed out after 10000ms","timestamp":"2026-02-25T17:15:10.058Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T07:50:00.066Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T07:55:00.052Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T08:00:00.030Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T08:05:00.053Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T08:15:00.061Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T08:20:00.063Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T08:25:00.061Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T08:30:00.012Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T08:35:00.030Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T08:40:00.025Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T08:45:00.021Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T10:40:00.050Z"}
+{"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-02-26T10:50:00.020Z"}

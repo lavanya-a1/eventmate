@@ -98,7 +98,7 @@ exports.cancelBooking = asyncHandler(async (req, res) => {
   const booking = await Booking.findOne({
     _id: bookingId,
     user: req.user.id,
-    status: "confirmed",
+    status: { $in: ["confirmed", "pending"] },
   });
 
   if (!booking) {

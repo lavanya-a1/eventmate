@@ -27,8 +27,19 @@ const paymentSchema = new mongoose.Schema({
     },
     paymentMethod: {
         type: String,
+        enum: ['Card', 'UPI', 'Wallet', 'Net Banking', 'Simulation'],
         default: 'Simulation'
-    }
+    },
+    event: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Event',
+    },
+    refundedAt: Date,
+    notes: String,
 }, { timestamps: true });
+
+paymentSchema.index({ user: 1 });
+paymentSchema.index({ status: 1 });
+paymentSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Payment', paymentSchema);

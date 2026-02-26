@@ -43,4 +43,10 @@ app.use("/api/qrcode", require("./routes/qr.routes"));
 
 app.use(errorHandler);
 
+// ─── Cron Jobs ────────────────────────────────────────────────────────────────
+// Only start in non-test environments
+if (process.env.NODE_ENV !== 'test') {
+  require('./jobs/reminderJob');
+}
+
 module.exports = app;

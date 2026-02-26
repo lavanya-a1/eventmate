@@ -1,0 +1,298 @@
+{
+  "info": {
+    "_postman_id": "eventmate-admin-collection",
+    "name": "EventMate — Admin API",
+    "description": "Complete admin backend for EventMate. Base URL: {{baseUrl}} (default: http://localhost:5000)\n\n**Auth:** Set `{{adminToken}}` in your environment after calling POST /api/auth/login with an admin account.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
+    { "key": "adminToken", "value": "", "type": "string" },
+    { "key": "eventId", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "bookingId", "value": "", "type": "string" },
+    { "key": "paymentId", "value": "", "type": "string" },
+    { "key": "notifId", "value": "", "type": "string" },
+    { "key": "feedbackId", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (get admin token)",
+          "event": [{ "listen": "test", "script": { "exec": ["if(pm.response.code===200){const d=pm.response.json();pm.collectionVariables.set('adminToken',d.token);}"], "type": "text/javascript" } }],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@eventmate.io\",\n  \"password\": \"Admin@1234\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Dashboard KPIs",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/dashboard" }
+        },
+        {
+          "name": "Get Activity Feed",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/dashboard/activity?limit=10", "query": [{ "key": "limit", "value": "10" }] } }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "List Events",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/admin/events?page=1&limit=20", "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }, { "key": "search", "value": "", "disabled": true }, { "key": "status", "value": "active", "disabled": true }, { "key": "category", "value": "", "disabled": true }] }
+          }
+        },
+        {
+          "name": "Get Event by ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/events/{{eventId}}" }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/events",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Tech Summit 2025\",\n  \"description\": \"A premier technology conference bringing together industry leaders.\",\n  \"location\": \"San Francisco Convention Center\",\n  \"date\": \"2025-09-15T09:00:00Z\",\n  \"category\": \"Technology\",\n  \"price\": 299,\n  \"capacity\": 500,\n  \"status\": \"active\"\n}" }
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/events/{{eventId}}",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Tech Summit 2025 (Updated)\",\n  \"price\": 349\n}" }
+          }
+        },
+        {
+          "name": "Toggle Event Status",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/admin/events/{{eventId}}/status" }
+        },
+        {
+          "name": "Delete Event (Soft)",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/admin/events/{{eventId}}" }
+        },
+        {
+          "name": "Delete Event (Hard)",
+          "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/admin/events/{{eventId}}?hard=true", "query": [{ "key": "hard", "value": "true" }] } }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/users?page=1&limit=20", "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }, { "key": "role", "value": "user", "disabled": true }, { "key": "isBlocked", "value": "false", "disabled": true }] } }
+        },
+        {
+          "name": "Get User by ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/users/{{userId}}" }
+        },
+        {
+          "name": "Get User Bookings",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/users/{{userId}}/bookings" }
+        },
+        {
+          "name": "Update User Role",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/users/{{userId}}/role",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"role\": \"organizer\"\n}" }
+          }
+        },
+        {
+          "name": "Toggle Block User",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/admin/users/{{userId}}/block" }
+        },
+        {
+          "name": "Delete User",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/admin/users/{{userId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "List Bookings",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/bookings?page=1&limit=20", "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }, { "key": "status", "value": "confirmed", "disabled": true }] } }
+        },
+        {
+          "name": "Get Booking by ID",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/bookings/{{bookingId}}" }
+        },
+        {
+          "name": "Export Bookings (CSV)",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/bookings/export?status=confirmed", "query": [{ "key": "status", "value": "confirmed" }] } }
+        },
+        {
+          "name": "Cancel Booking",
+          "request": { "method": "PATCH", "url": "{{baseUrl}}/api/admin/bookings/{{bookingId}}/cancel" }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "List Payments",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/payments?page=1&limit=20", "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }, { "key": "status", "value": "completed", "disabled": true }, { "key": "method", "value": "Card", "disabled": true }] } }
+        },
+        {
+          "name": "Payment Summary",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/payments/summary" }
+        },
+        {
+          "name": "Revenue Analytics",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/payments/analytics?months=12", "query": [{ "key": "months", "value": "12" }] } }
+        }
+      ]
+    },
+    {
+      "name": "QR / Attendance",
+      "item": [
+        {
+          "name": "Validate QR Ticket",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/qr/validate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"ticketId\": \"YOUR_TICKET_ID_OR_QR_CODE\"\n}" }
+          }
+        },
+        {
+          "name": "Get Event Attendance",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/qr/attendance/{{eventId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List Notifications",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/notifications?page=1&limit=20", "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }, { "key": "type", "value": "broadcast", "disabled": true }, { "key": "status", "value": "sent", "disabled": true }] } }
+        },
+        {
+          "name": "Broadcast Notification",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/notifications/broadcast",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Platform Maintenance\",\n  \"message\": \"EventMate will be under maintenance on Saturday from 2-4 AM UTC.\",\n  \"audience\": \"all\",\n  \"sendEmail\": false\n}" }
+          }
+        },
+        {
+          "name": "Schedule Reminder",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/admin/notifications/reminder",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Event Tomorrow!\",\n  \"message\": \"Don't forget your event is tomorrow. Get ready!\",\n  \"scheduledAt\": \"2025-09-14T09:00:00Z\",\n  \"eventId\": \"{{eventId}}\",\n  \"audience\": \"attendees\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Notification",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/admin/notifications/{{notifId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Feedback",
+      "item": [
+        {
+          "name": "List Feedback",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/feedback?page=1&limit=20", "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }, { "key": "status", "value": "pending", "disabled": true }] } }
+        },
+        {
+          "name": "Rating Analytics",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/feedback/analytics" }
+        },
+        {
+          "name": "Approve Feedback",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/feedback/{{feedbackId}}/moderate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"action\": \"approve\"\n}" }
+          }
+        },
+        {
+          "name": "Reject Feedback",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/admin/feedback/{{feedbackId}}/moderate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"action\": \"reject\"\n}" }
+          }
+        },
+        {
+          "name": "Delete Feedback",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/admin/feedback/{{feedbackId}}" }
+        }
+      ]
+    },
+    {
+      "name": "System Logs",
+      "item": [
+        {
+          "name": "Get Logs",
+          "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/admin/logs?page=1&limit=50", "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "50" }, { "key": "level", "value": "error", "disabled": true }, { "key": "module", "value": "Events", "disabled": true }] } }
+        },
+        {
+          "name": "Clear Logs (by level)",
+          "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/admin/logs?level=debug", "query": [{ "key": "level", "value": "debug" }] } }
+        },
+        {
+          "name": "Clear Logs (older than N days)",
+          "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/admin/logs?olderThanDays=30", "query": [{ "key": "olderThanDays", "value": "30" }] } }
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/admin/settings/profile" }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/settings/profile",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Admin User\",\n  \"phone\": \"+1-555-0100\",\n  \"bio\": \"EventMate platform administrator.\"\n}" }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/admin/settings/password",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"Admin@1234\",\n  \"newPassword\": \"NewAdmin@5678\"\n}" }
+          }
+        }
+      ]
+    }
+  ]
+}

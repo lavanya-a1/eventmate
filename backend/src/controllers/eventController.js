@@ -19,7 +19,7 @@ exports.getAllEvents = asyncHandler(async (req, res) => {
     order = "asc",
   } = req.query;
 
-  const query = { isDeleted: false };
+  const query = { isDeleted: { $ne: true } };
 
   // 🔎 Flexible Search (Regex)
   if (search) {
@@ -31,9 +31,9 @@ exports.getAllEvents = asyncHandler(async (req, res) => {
     ];
   }
 
-  // 📂 Category
+  // 📂 Category — case-insensitive partial match
   if (category) {
-    query.category = category;
+    query.category = { $regex: category, $options: "i" };
   }
 
   // 📍 Location
@@ -76,7 +76,7 @@ exports.getAllEvents = asyncHandler(async (req, res) => {
  * @access  Public
  */
 exports.getEventById = asyncHandler(async (req, res) => {
-  const event = await Event.findOne({ _id: req.params.id, isDeleted: false })
+  const event = await Event.findOne({ _id: req.params.id, isDeleted: { $ne: true } })
     .populate("organizer", "name email");
 
   if (!event) {

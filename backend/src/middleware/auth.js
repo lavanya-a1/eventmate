@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-module.exports = (req, res, next) => {
+const protect = (req, res, next) => {
   console.log("AUTH HEADER:", req.headers.authorization);
 
   const authHeader = req.headers.authorization;
@@ -30,3 +30,7 @@ module.exports = (req, res, next) => {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
+
+// Export both default (backwards-compat for old routes) and named (for admin routes)
+module.exports = protect;
+module.exports.protect = protect;
