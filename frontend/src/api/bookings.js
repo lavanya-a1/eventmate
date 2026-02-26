@@ -1,8 +1,8 @@
 import api from './axios';
 
-// POST /api/bookings  { eventId }
-export const createBooking = (eventId) =>
-  api.post('/bookings', { eventId }).then((r) => r.data);
+// POST /api/bookings  { eventId, seats }
+export const createBooking = (eventId, seats = 1) =>
+  api.post('/bookings', { eventId, seats }).then((r) => r.data);
 
 // GET /api/bookings/me
 export const getMyBookings = () =>

@@ -7,6 +7,8 @@ const Notification = require("../models/Notification");
 exports.createBooking = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const eventId = req.params.eventId || req.body.eventId;
+  const rawSeats = parseInt(req.body.seats, 10);
+  const seats = Number.isFinite(rawSeats) && rawSeats > 0 ? rawSeats : 1;
 
   if (!eventId || !mongoose.Types.ObjectId.isValid(eventId)) {
     return res.status(400).json({ success: false, message: "Invalid eventId" });
@@ -30,9 +32,14 @@ exports.createBooking = asyncHandler(async (req, res) => {
       _id: eventId,
       isDeleted: false,
       date: { $gte: now },
-      $expr: { $lt: ["$bookedSeats", "$capacity"] },
+      $expr: {
+        $lte: [
+          { $add: ["$bookedSeats", seats] },
+          "$capacity",
+        ],
+      },
     },
-    { $inc: { bookedSeats: 1 } },
+    { $inc: { bookedSeats: seats } },
     { new: true }
   );
 
@@ -52,7 +59,8 @@ exports.createBooking = asyncHandler(async (req, res) => {
       user: userId,
       event: eventId,
       status: "pending",
-      seats: 1,
+      seats,
+      amount: typeof reservedEvent.price === "number" ? reservedEvent.price * seats : 0,
     });
 
     // Create notification
@@ -108,7 +116,10 @@ exports.cancelBooking = asyncHandler(async (req, res) => {
   booking.status = "cancelled";
   await booking.save();
 
-  await Event.updateOne({ _id: booking.event, bookedSeats: { $gt: 0 } }, { $inc: { bookedSeats: -1 } });
+  await Event.updateOne(
+    { _id: booking.event, bookedSeats: { $gt: 0 } },
+    { $inc: { bookedSeats: -booking.seats } }
+  );
 
   res.json({ success: true, message: "Booking cancelled" });
 });

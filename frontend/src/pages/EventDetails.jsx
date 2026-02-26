@@ -16,6 +16,7 @@ const EventDetails = () => {
     const [event, setEvent] = useState(null);
     const [loading, setLoading] = useState(true);
     const [booking, setBooking] = useState(false);
+    const [seats, setSeats] = useState(1);
     const [isBooked, setIsBooked] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -39,11 +40,22 @@ const EventDetails = () => {
         fetchEvent();
     }, [id, user]);
 
+    const adjustSeats = (delta) => {
+        if (!event) return;
+        const maxSeats = Math.max(1, event.availableSeats ?? 1);
+        setSeats((prev) => {
+            const next = prev + delta;
+            if (next < 1) return 1;
+            if (next > maxSeats) return maxSeats;
+            return next;
+        });
+    };
+
     const handleBook = async () => {
         if (!user) { navigate('/login'); return; }
         setBooking(true);
         try {
-            await api.post(`/events/${id}/book`);
+            await api.post(`/events/${id}/book`, { seats });
             setIsBooked(true);
             setMessage({ text: 'Successfully registered for this event!', type: 'success' });
             const res = await api.get(`/events/${id}`);
@@ -178,7 +190,44 @@ const EventDetails = () => {
                             </div>
                         </div>
 
-                        {/* Book Button */}
+                        {/* Seat selection + Book Button */}
+                        {!isPast && !isFull && (
+                            <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Seats</span>
+                                    <div className="flex items-center bg-white/5 rounded-xl border border-theme-strong overflow-hidden">
+                                        <button
+                                            type="button"
+                                            onClick={() => adjustSeats(-1)}
+                                            className="px-3 py-2 text-lg font-bold text-text-muted hover:bg-white/5 disabled:opacity-50"
+                                            disabled={seats <= 1}
+                                        >
+                                            -
+                                        </button>
+                                        <span className="px-4 py-2 text-sm font-bold text-white min-w-[2.5rem] text-center">
+                                            {seats}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={() => adjustSeats(1)}
+                                            className="px-3 py-2 text-lg font-bold text-text-muted hover:bg-white/5 disabled:opacity-50"
+                                            disabled={event.availableSeats != null && seats >= event.availableSeats}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                                {typeof event.price === 'number' && (
+                                    <div className="text-sm text-text-muted">
+                                        <span className="font-semibold text-white">
+                                            Total:&nbsp;
+                                            {event.price === 0 ? 'Free' : `$${(event.price * seats).toFixed(2)}`}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <button
                             onClick={handleBook}
                             disabled={booking || isBooked || isFull || isPast}
