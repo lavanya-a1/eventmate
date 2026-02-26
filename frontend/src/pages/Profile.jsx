@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Lock, Shield, History, Save, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useApi, useMutation } from '../hooks/useApi';
 import { getProfile, updateProfile, changePassword } from '../api/user';
@@ -9,7 +9,7 @@ const InputField = ({ label, type = 'text', value, onChange, placeholder, disabl
         <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">{label}</label>
         <input type={type} value={value} onChange={onChange} placeholder={placeholder}
             disabled={disabled}
-            className="w-full px-4 py-2.5 bg-[#070713] border border-white/[0.07] rounded-xl text-sm text-white
+            className="w-full px-4 py-2.5 bg-theme-card-alt border border-theme rounded-xl text-sm text-white
                        placeholder-slate-600 focus:outline-none focus:border-primary-500/50 disabled:opacity-50" />
     </div>
 );
@@ -28,7 +28,7 @@ const statusLabel = (booking) => {
 };
 
 const formatDate = (d) =>
-    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '�';
 
 export default function Profile() {
     const [activeTab, setActiveTab] = useState('personal');
@@ -106,24 +106,24 @@ export default function Profile() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-xl font-bold text-white">Profile</h1>
+                <h1 className="text-xl font-bold text-theme">Profile</h1>
                 <p className="text-slate-500 text-sm mt-1">Manage your account settings</p>
             </div>
 
             {/* Profile header */}
-            <div className="bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-6 flex items-center gap-4">
+            <div className="bg-theme-card border border-theme rounded-2xl p-6 flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-600 to-indigo-600
                                 flex items-center justify-center text-white text-2xl font-bold shrink-0">
                     {name ? name.charAt(0).toUpperCase() : <User size={24} />}
                 </div>
                 <div>
-                    <p className="text-base font-semibold text-white">{name || '—'}</p>
-                    <p className="text-slate-500 text-sm">{email || '—'}</p>
+                    <p className="text-base font-semibold text-theme">{name || '�'}</p>
+                    <p className="text-slate-500 text-sm">{email || '�'}</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1 bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-1.5">
+            <div className="flex gap-1 bg-theme-card border border-theme rounded-2xl p-1.5">
                 {tabs.map(({ id, label, icon: Icon }) => (
                     <button key={id} onClick={() => setActiveTab(id)}
                         className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-sm
@@ -138,7 +138,7 @@ export default function Profile() {
 
             {/* Tab content */}
             {activeTab === 'personal' && (
-                <div className="bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-6 space-y-5">
+                <div className="bg-theme-card border border-theme rounded-2xl p-6 space-y-5">
                     <Msg msg={profileMsg} />
                     <form onSubmit={handleSaveProfile} className="space-y-4">
                         <InputField label="Full Name" value={name} onChange={(e) => setName(e.target.value)}
@@ -158,19 +158,19 @@ export default function Profile() {
             )}
 
             {activeTab === 'security' && (
-                <div className="bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-6 space-y-5">
+                <div className="bg-theme-card border border-theme rounded-2xl p-6 space-y-5">
                     <div className="flex items-center gap-2 mb-1">
                         <Lock size={16} className="text-primary-400" />
-                        <h2 className="text-base font-semibold text-white">Change Password</h2>
+                        <h2 className="text-base font-semibold text-theme">Change Password</h2>
                     </div>
                     <Msg msg={pwMsg} />
                     <form onSubmit={handleChangePassword} className="space-y-4">
                         <InputField label="Current Password" type="password" value={curPw}
-                            onChange={(e) => setCurPw(e.target.value)} placeholder="••••••••" />
+                            onChange={(e) => setCurPw(e.target.value)} placeholder="��������" />
                         <InputField label="New Password" type="password" value={newPw}
-                            onChange={(e) => setNewPw(e.target.value)} placeholder="••••••••" />
+                            onChange={(e) => setNewPw(e.target.value)} placeholder="��������" />
                         <InputField label="Confirm New Password" type="password" value={cnfPw}
-                            onChange={(e) => setCnfPw(e.target.value)} placeholder="••••••••" />
+                            onChange={(e) => setCnfPw(e.target.value)} placeholder="��������" />
                         <button type="submit" disabled={savingPw || !curPw || !newPw || !cnfPw}
                             className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary-600
                                        hover:bg-primary-500 text-white text-sm font-medium
@@ -183,11 +183,11 @@ export default function Profile() {
             )}
 
             {activeTab === 'history' && (
-                <div className="bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-6 space-y-4">
-                    <h2 className="text-base font-semibold text-white">Booking History</h2>
+                <div className="bg-theme-card border border-theme rounded-2xl p-6 space-y-4">
+                    <h2 className="text-base font-semibold text-theme">Booking History</h2>
                     {loadingBookings && (
                         <div className="flex items-center gap-2 text-slate-500 text-sm py-6">
-                            <Loader2 size={16} className="animate-spin" /> Loading…
+                            <Loader2 size={16} className="animate-spin" /> Loading�
                         </div>
                     )}
                     {!loadingBookings && bookings.length === 0 && (
@@ -197,9 +197,9 @@ export default function Profile() {
                         {bookings.map((b) => (
                             <div key={b._id}
                                 className="flex items-center justify-between px-4 py-3 rounded-xl
-                                           bg-white/[0.025] border border-white/[0.04] gap-3">
+                                           bg-white/[0.025] border border-theme gap-3">
                                 <div className="min-w-0">
-                                    <p className="text-sm font-medium text-white truncate">{b.event?.title || 'Event'}</p>
+                                    <p className="text-sm font-medium text-theme truncate">{b.event?.title || 'Event'}</p>
                                     <p className="text-[11px] text-slate-600 mt-0.5">{formatDate(b.event?.date)}</p>
                                 </div>
                                 <span className={`text-xs font-semibold shrink-0 ${statusVariant(b)}`}>

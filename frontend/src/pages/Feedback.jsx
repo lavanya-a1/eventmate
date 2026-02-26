@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Star, ThumbsUp, MessageSquare, Loader2, AlertCircle, CheckCircle2, Send } from 'lucide-react';
 import { useApi, useMutation } from '../hooks/useApi';
 import { submitFeedback, getMyFeedback } from '../api/feedback';
@@ -18,7 +18,7 @@ const StarRating = ({ value, onChange }) => (
 );
 
 const formatDate = (d) =>
-    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+    d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '�';
 
 export default function Feedback() {
     const { data: bookingsData, loading: loadingBookings } = useApi(getMyBookings);
@@ -51,14 +51,14 @@ export default function Feedback() {
     return (
         <div className="space-y-8">
             <div>
-                <h1 className="text-xl font-bold text-white">Feedback</h1>
+                <h1 className="text-xl font-bold text-theme">Feedback</h1>
                 <p className="text-slate-500 text-sm mt-1">Share your experience and help the community</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
                 {/* Submit Feedback Form */}
-                <div className="bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-6 space-y-5">
-                    <h2 className="text-base font-semibold text-white flex items-center gap-2">
+                <div className="bg-theme-card border border-theme rounded-2xl p-6 space-y-5">
+                    <h2 className="text-base font-semibold text-theme flex items-center gap-2">
                         <MessageSquare size={16} className="text-primary-400" /> Leave Feedback
                     </h2>
 
@@ -78,10 +78,10 @@ export default function Feedback() {
                             <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">Event</label>
                             <select value={eventId} onChange={(e) => setEventId(e.target.value)} required
                                 disabled={loadingBookings}
-                                className="w-full px-4 py-2.5 bg-[#070713] border border-white/[0.07] rounded-xl
-                                           text-sm text-white focus:outline-none focus:border-primary-500/50
+                                className="w-full px-4 py-2.5 bg-theme-card-alt border border-theme rounded-xl
+                                           text-sm text-theme focus:outline-none focus:border-primary-500/50
                                            disabled:opacity-50 appearance-none">
-                                <option value="">Select an event…</option>
+                                <option value="">Select an event�</option>
                                 {bookings.map((b) => (
                                     <option key={b._id} value={b.event?._id}>
                                         {b.event?.title || 'Unknown Event'}
@@ -99,9 +99,9 @@ export default function Feedback() {
                             <label className="text-xs font-medium text-slate-500 uppercase tracking-wider block mb-2">Comment</label>
                             <textarea
                                 value={comment} onChange={(e) => setComment(e.target.value)}
-                                rows={4} placeholder="Share your experience…"
-                                className="w-full px-4 py-3 bg-[#070713] border border-white/[0.07] rounded-xl
-                                           text-sm text-white placeholder-slate-600 resize-none
+                                rows={4} placeholder="Share your experience�"
+                                className="w-full px-4 py-3 bg-theme-card-alt border border-theme rounded-xl
+                                           text-sm text-theme placeholder-slate-600 resize-none
                                            focus:outline-none focus:border-primary-500/50"
                             />
                         </div>
@@ -118,10 +118,10 @@ export default function Feedback() {
 
                 {/* Feedback History */}
                 <div className="space-y-4">
-                    <h2 className="text-base font-semibold text-white">My Feedback History</h2>
+                    <h2 className="text-base font-semibold text-theme">My Feedback History</h2>
                     {loadingFeedback && (
                         <div className="flex items-center gap-2 text-slate-500 text-sm py-6">
-                            <Loader2 size={16} className="animate-spin" /> Loading…
+                            <Loader2 size={16} className="animate-spin" /> Loading�
                         </div>
                     )}
                     {!loadingFeedback && feedbackHistory.length === 0 && (
@@ -132,10 +132,10 @@ export default function Feedback() {
                     )}
                     {feedbackHistory.map((fb) => (
                         <div key={fb._id}
-                            className="bg-[#0d0e1a] border border-white/[0.07] rounded-2xl p-5 space-y-3">
+                            className="bg-theme-card border border-theme rounded-2xl p-5 space-y-3">
                             <div className="flex items-start justify-between gap-2">
                                 <div>
-                                    <p className="text-sm font-semibold text-white">{fb.event?.title || 'Event'}</p>
+                                    <p className="text-sm font-semibold text-theme">{fb.event?.title || 'Event'}</p>
                                     <p className="text-[10px] text-slate-600 mt-0.5">{formatDate(fb.createdAt)}</p>
                                 </div>
                                 <div className="flex gap-0.5 shrink-0">

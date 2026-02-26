@@ -17,8 +17,9 @@ const Login = () => {
         setLoading(true);
         setError('');
         try {
-            await login(email, password);
-            navigate('/dashboard');
+            const data = await login(email, password);
+            const role = data.user?.role || data.role;
+            navigate(role === 'admin' ? '/admin' : '/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid email or password');
         } finally {

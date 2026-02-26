@@ -61,7 +61,7 @@ const Navbar = () => {
                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        className="absolute top-full right-0 mt-3 w-48 bg-surface border border-white/10 shadow-2xl rounded-2xl overflow-hidden"
+                                        className="absolute top-full right-0 mt-3 w-48 bg-surface border border-theme-strong shadow-2xl rounded-2xl overflow-hidden"
                                     >
                                         <div className="py-2">
                                             <Link to="/profile" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-white/5 transition-all">

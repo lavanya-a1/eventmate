@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import QRCode from 'react-qr-code';
 import {
@@ -33,9 +33,9 @@ export default function QRTickets() {
     const ev      = booking?.event || {};
 
     const formatDate = (d) =>
-        d ? new Date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+        d ? new Date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : '�';
     const formatTime = (d) =>
-        d ? new Date(d).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
+        d ? new Date(d).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '�';
 
     const qrValue = booking
         ? JSON.stringify({
@@ -52,7 +52,7 @@ export default function QRTickets() {
     const handleShare = async () => {
         if (navigator.share) {
             await navigator.share({
-                title: `EventMate Ticket – ${ev.title}`,
+                title: `EventMate Ticket � ${ev.title}`,
                 text: `My ticket for ${ev.title} on ${formatDate(ev.date)}`,
                 url: window.location.href,
             }).catch(() => {});
@@ -64,7 +64,7 @@ export default function QRTickets() {
 
     if (loading) return (
         <div className="flex items-center justify-center py-24 text-slate-500">
-            <Loader2 size={20} className="animate-spin mr-2" /> Loading tickets…
+            <Loader2 size={20} className="animate-spin mr-2" /> Loading tickets�
         </div>
     );
 
@@ -82,7 +82,7 @@ export default function QRTickets() {
             <p className="text-slate-500 text-sm">Book an event to get your digital tickets here</p>
             <button onClick={() => navigate('/browse')}
                 className="mt-2 text-sm text-primary-400 hover:text-primary-300 transition-colors font-medium">
-                Browse Events →
+                Browse Events ?
             </button>
         </div>
     );
@@ -91,7 +91,7 @@ export default function QRTickets() {
         <div className="space-y-8 flex flex-col items-center pb-16">
             <div className="w-full flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-white tracking-tight">Digital Tickets</h1>
+                    <h1 className="text-xl font-bold text-theme tracking-tight">Digital Tickets</h1>
                     <p className="text-slate-500 text-sm mt-1">Present this QR code at the entry gates</p>
                 </div>
                 {bookings.length > 1 && (
@@ -116,7 +116,7 @@ export default function QRTickets() {
                 <div className="absolute -inset-4 bg-primary-600/15 blur-3xl rounded-full opacity-50 pointer-events-none" />
 
                 <div ref={ticketRef}
-                    className="relative z-10 bg-[#0d0e1a] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                    className="relative z-10 bg-theme-card border border-theme-strong rounded-2xl overflow-hidden shadow-2xl">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-primary-700 to-indigo-700 px-6 py-4 flex justify-between items-center">
                         <span className="font-bold text-white text-sm tracking-widest uppercase">Entry Pass</span>
@@ -132,15 +132,15 @@ export default function QRTickets() {
                         </div>
 
                         <div className="w-full text-center">
-                            <h2 className="text-lg font-bold text-white mb-1 line-clamp-2">{ev.title || 'Event'}</h2>
+                            <h2 className="text-lg font-bold text-theme mb-1 line-clamp-2">{ev.title || 'Event'}</h2>
                             <Badge variant={booking.status === 'confirmed' ? 'success' : 'warning'} className="mb-5">
                                 {booking.status === 'confirmed' ? 'CONFIRMED' : booking.status?.toUpperCase()}
                             </Badge>
 
-                            <div className="grid grid-cols-2 gap-3 text-left border-y border-white/[0.06] py-5 mb-5">
+                            <div className="grid grid-cols-2 gap-3 text-left border-y border-theme py-5 mb-5">
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1">Attendee</p>
-                                    <p className="text-sm font-medium text-white truncate">{user?.name || 'Guest'}</p>
+                                    <p className="text-sm font-medium text-theme truncate">{user?.name || 'Guest'}</p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1">Seats</p>
@@ -158,7 +158,7 @@ export default function QRTickets() {
 
                             {ev.location && (
                                 <div className="flex items-center gap-2 text-slate-400 text-xs justify-center
-                                                py-3 bg-white/[0.03] rounded-xl border border-white/[0.06]">
+                                                py-3 bg-white/[0.03] rounded-xl border border-theme">
                                     <MapPin size={13} className="text-primary-400" />
                                     {ev.location}
                                 </div>
@@ -167,9 +167,9 @@ export default function QRTickets() {
                     </div>
 
                     {/* Tear edge */}
-                    <div className="h-4 w-full flex overflow-hidden border-t border-dashed border-white/10">
+                    <div className="h-4 w-full flex overflow-hidden border-t border-dashed border-theme-strong">
                         {Array.from({ length: 20 }).map((_, i) => (
-                            <div key={i} className="w-6 h-6 rounded-full bg-[#020617] -mt-3 shrink-0 mx-auto" />
+                            <div key={i} className="w-6 h-6 rounded-full bg-base -mt-3 shrink-0 mx-auto" />
                         ))}
                     </div>
                 </div>
@@ -183,13 +183,13 @@ export default function QRTickets() {
                     <Download size={16} /> Download / Print
                 </button>
                 <button onClick={handleShare}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#0d0e1a] border border-white/[0.06]
-                               hover:border-white/10 text-slate-300 hover:text-white text-sm font-medium transition-colors">
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-theme-card border border-theme
+                               hover:border-theme-strong text-slate-300 hover:text-white text-sm font-medium transition-colors">
                     <Share2 size={16} /> Share
                 </button>
                 <button onClick={() => navigate('/bookings')}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#0d0e1a] border border-white/[0.06]
-                               hover:border-white/10 text-slate-400 hover:text-white text-sm transition-colors">
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-theme-card border border-theme
+                               hover:border-theme-strong text-slate-400 hover:text-white text-sm transition-colors">
                     All Bookings
                 </button>
             </div>

@@ -11,7 +11,7 @@ export function cn(...inputs) {
 export const Button = React.forwardRef(({ className, variant = 'primary', size = 'md', ...props }, ref) => {
     const variants = {
         primary: 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-600/20',
-        secondary: 'bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm border border-white/10',
+        secondary: 'bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm border border-theme-strong',
         ghost: 'bg-transparent text-white hover:bg-white/10',
         outline: 'bg-transparent border border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white',
         danger: 'bg-red-600 text-white hover:bg-red-700',
@@ -58,7 +58,7 @@ export const Input = React.forwardRef(({ className, label, error, ...props }, re
             <input
                 ref={ref}
                 className={cn(
-                    'w-full bg-slate-900/50 border border-white/10 rounded-lg px-4 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all',
+                    'w-full bg-slate-900/50 border border-theme-strong rounded-lg px-4 py-2 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all',
                     error && 'border-red-500 focus:ring-red-500/50',
                     className
                 )}

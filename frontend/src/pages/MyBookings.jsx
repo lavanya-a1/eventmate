@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Ticket, Calendar, Download, XCircle,
@@ -26,9 +26,9 @@ export default function MyBookings() {
     const bookings = data?.data || [];
 
     const formatDate = (d) =>
-        d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+        d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '�';
     const formatTime = (d) =>
-        d ? new Date(d).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
+        d ? new Date(d).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '�';
 
     const handleCancel = async (bookingId) => {
         if (!window.confirm('Cancel this booking?')) return;
@@ -46,7 +46,7 @@ export default function MyBookings() {
 
     if (loading) return (
         <div className="flex items-center justify-center py-24 text-slate-500">
-            <Loader2 size={20} className="animate-spin mr-2" /> Loading bookings…
+            <Loader2 size={20} className="animate-spin mr-2" /> Loading bookings�
         </div>
     );
 
@@ -66,7 +66,7 @@ export default function MyBookings() {
         <div className="space-y-6 pb-16">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-white tracking-tight">My Bookings</h1>
+                    <h1 className="text-xl font-bold text-theme tracking-tight">My Bookings</h1>
                     <p className="text-slate-500 text-sm mt-1">
                         {bookings.length} booking{bookings.length !== 1 ? 's' : ''} total
                     </p>
@@ -91,7 +91,7 @@ export default function MyBookings() {
                     <p className="text-slate-500 text-sm mt-1">Browse events and book your first ticket</p>
                     <button onClick={() => navigate('/browse')}
                         className="mt-4 text-sm text-primary-400 hover:text-primary-300 transition-colors font-medium">
-                        Browse Events →
+                        Browse Events ?
                     </button>
                 </div>
             ) : (
@@ -105,16 +105,16 @@ export default function MyBookings() {
 
                         return (
                             <Card key={booking._id}
-                                className="p-0 border-white/[0.06] hover:border-white/10 transition-colors overflow-hidden">
+                                className="p-0 border-theme hover:border-theme-strong transition-colors overflow-hidden">
                                 <div className="flex flex-col lg:flex-row">
                                     {/* Event Image */}
                                     <div className="flex flex-1 p-5 items-center gap-5">
                                         {ev.image ? (
                                             <img src={ev.image} alt={ev.title}
-                                                className="w-16 h-16 rounded-xl object-cover shrink-0 border border-white/10" />
+                                                className="w-16 h-16 rounded-xl object-cover shrink-0 border border-theme-strong" />
                                         ) : (
                                             <div className="w-16 h-16 rounded-xl bg-primary-900/30 flex items-center
-                                                            justify-center shrink-0 border border-white/10">
+                                                            justify-center shrink-0 border border-theme-strong">
                                                 <Ticket size={22} className="text-primary-500" />
                                             </div>
                                         )}
@@ -125,7 +125,7 @@ export default function MyBookings() {
                                                 </span>
                                                 <Badge variant={statusVariant}>{statusLabel}</Badge>
                                             </div>
-                                            <h3 className="text-base font-semibold text-white truncate">
+                                            <h3 className="text-base font-semibold text-theme truncate">
                                                 {ev.title || 'Event'}
                                             </h3>
                                             <div className="flex flex-wrap items-center gap-4 mt-2">
@@ -150,8 +150,8 @@ export default function MyBookings() {
                                                     border-white/[0.05] p-5 flex flex-col justify-center gap-3">
                                         <div className="text-right lg:text-right">
                                             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Amount</p>
-                                            <p className="text-lg font-bold text-white">
-                                                {ev.price != null ? `$${ev.price}.00` : '—'}
+                                            <p className="text-lg font-bold text-theme">
+                                                {ev.price != null ? `$${ev.price}.00` : '�'}
                                             </p>
                                         </div>
                                         <div className="flex flex-row lg:flex-col gap-2">
@@ -180,7 +180,7 @@ export default function MyBookings() {
                                                 <button
                                                     onClick={() => navigate('/feedback')}
                                                     className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg
-                                                               border border-white/[0.06] hover:bg-white/5 text-slate-400
+                                                               border border-theme hover:bg-white/5 text-slate-400
                                                                hover:text-white text-xs font-medium transition-colors">
                                                     <ExternalLink size={14} /> Feedback
                                                 </button>

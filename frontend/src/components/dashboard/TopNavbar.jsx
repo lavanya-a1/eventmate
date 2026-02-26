@@ -78,10 +78,9 @@ export default function TopNavbar({
         }
     };
 
-    const handleThemeToggle = () => {
-        setIsDarkMode(!isDarkMode);
-        document.documentElement.classList.toggle('dark', !isDarkMode);
-    };
+    const handleThemeToggle = useCallback(() => {
+        setIsDarkMode((prev) => !prev);
+    }, [setIsDarkMode]);
 
     const notifications = apiNotifications.slice(0, 5);
 

@@ -44,7 +44,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
             {/* Desktop Sidebar - Fixed position with proper spacing */}
             <aside
                 className={cn(
-                    "h-screen glass border-r border-white/10 transition-all duration-300 z-50 flex flex-col shrink-0 overflow-hidden",
+                    "h-screen glass border-r border-theme-strong transition-all duration-300 z-50 flex flex-col shrink-0 overflow-hidden",
                     // Desktop: Always visible with toggle
                     "hidden lg:flex lg:relative lg:translate-x-0",
                     // Responsive width based on isOpen state
@@ -93,7 +93,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
 
                             {/* Tooltip when collapsed - only on desktop */}
                             {!isOpen && (
-                                <div className="absolute left-full ml-4 px-3 py-1.5 bg-slate-900/95 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 translate-x-[-10px] group-hover:translate-x-0 z-[100] border border-white/10 whitespace-nowrap shadow-2xl">
+                                <div className="absolute left-full ml-4 px-3 py-1.5 bg-slate-900/95 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 translate-x-[-10px] group-hover:translate-x-0 z-[100] border border-theme-strong whitespace-nowrap shadow-2xl">
                                     {item.label}
                                 </div>
                             )}
@@ -102,7 +102,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 </nav>
 
                 {/* Sign Out Button */}
-                <div className="p-3 border-t border-white/10 bg-white/[0.01]">
+                <div className="p-3 border-t border-theme-strong bg-white/[0.01]">
                     <button
                         onClick={logout}
                         className={cn(
@@ -125,7 +125,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
 
             {/* Mobile Sidebar - Overlay on top */}
             {isOpen && (
-                <aside className="fixed inset-y-0 left-0 w-[280px] z-50 glass border-r border-white/10 flex flex-col overflow-hidden lg:hidden shadow-2xl">
+                <aside className="fixed inset-y-0 left-0 w-[280px] z-50 glass border-r border-theme-strong flex flex-col overflow-hidden lg:hidden shadow-2xl">
                     {/* Mobile Sidebar Header */}
                     <div className="h-16 flex items-center justify-between px-6 shrink-0 border-b border-white/5 bg-white/[0.02]">
                         <div className="flex items-center gap-3">
@@ -164,7 +164,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                     </nav>
 
                     {/* Mobile Sign Out Button */}
-                    <div className="p-3 border-t border-white/10 bg-white/[0.01]">
+                    <div className="p-3 border-t border-theme-strong bg-white/[0.01]">
                         <button
                             onClick={logout}
                             className="w-full flex items-center gap-4 px-3 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold text-sm"

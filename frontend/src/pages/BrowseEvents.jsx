@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Search, MapPin, Calendar, Filter, CreditCard,
@@ -8,7 +8,7 @@ import { Card, Button, Badge, cn } from '../components/ui';
 import { getEvents } from '../api/events';
 import { createBooking } from '../api/bookings';
 
-const CATEGORIES = ['All', 'Music', 'Tech', 'Health', 'Art', 'Sports', 'Food'];
+const CATEGORIES = ['All', 'Technology', 'Education', 'Entertainment', 'Arts', 'Marketing', 'Sports', 'Health'];
 
 export default function BrowseEvents() {
     const navigate        = useNavigate();
@@ -20,25 +20,33 @@ export default function BrowseEvents() {
     const [page,            setPage]            = useState(1);
 
     // Data state
-    const [events,   setEvents]   = useState([]);
-    const [total,    setTotal]    = useState(0);
-    const [pages,    setPages]    = useState(1);
-    const [loading,  setLoading]  = useState(true);
-    const [error,    setError]    = useState(null);
+    const [events,    setEvents]    = useState([]);
+    const [total,     setTotal]     = useState(0);
+    const [pages,     setPages]     = useState(1);
+    const [loading,   setLoading]   = useState(true);  // initial skeleton
+    const [fetching,  setFetching]  = useState(false); // subsequent quiet refetch
+    const [error,     setError]     = useState(null);
+    const isFirstFetch = useRef(true);
 
     // Modal / booking state
     const [selectedEvent,  setSelectedEvent]  = useState(null);
     const [booking,        setBooking]        = useState({ loading: false, error: null, success: false });
 
     const debounceRef = useRef(null);
+    const setSearchParamsRef = useRef(setSearchParams);
+    useEffect(() => { setSearchParamsRef.current = setSearchParams; }, [setSearchParams]);
 
-    // ── Fetch events ──────────────────────────────────────────
+    // -- Fetch events ------------------------------------------
     const fetchEvents = useCallback(async (term, category, pg) => {
-        setLoading(true);
+        if (isFirstFetch.current) {
+            setLoading(true);
+        } else {
+            setFetching(true);
+        }
         setError(null);
         try {
             const params = { page: pg, limit: 9 };
-            if (term)                    params.search   = term;
+            if (term)                           params.search   = term;
             if (category && category !== 'All') params.category = category;
             const res = await getEvents(params);
             setEvents(res.data || []);
@@ -47,40 +55,45 @@ export default function BrowseEvents() {
         } catch (err) {
             setError(err?.response?.data?.message || 'Failed to load events');
         } finally {
+            isFirstFetch.current = false;
             setLoading(false);
+            setFetching(false);
         }
     }, []);
 
-    // Debounce search & category changes
+    // Category changes: fire immediately
+    const handleCategoryChange = useCallback((cat) => {
+        setActiveCategory(cat);
+        setPage(1);
+        const sp = {};
+        if (searchTerm) sp.q = searchTerm;
+        if (cat !== 'All') sp.category = cat;
+        setSearchParamsRef.current(sp, { replace: true });
+        fetchEvents(searchTerm, cat, 1);
+    }, [fetchEvents, searchTerm]);
+
+    // Search: debounce 400ms, don't re-fire if category already triggered
     useEffect(() => {
         clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
             setPage(1);
             fetchEvents(searchTerm, activeCategory, 1);
-            // Keep URL in sync
             const sp = {};
-            if (searchTerm)              sp.q        = searchTerm;
+            if (searchTerm)               sp.q        = searchTerm;
             if (activeCategory !== 'All') sp.category = activeCategory;
-            setSearchParams(sp, { replace: true });
-        }, 350);
-    }, [searchTerm, activeCategory, fetchEvents, setSearchParams]);
+            setSearchParamsRef.current(sp, { replace: true });
+        }, 400);
+        return () => clearTimeout(debounceRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTerm]);
 
-    // Re-fetch when page changes
+    // Re-fetch when page changes (page > 1 only; page=1 is handled by the debounce effect)
     useEffect(() => {
         if (page > 1) fetchEvents(searchTerm, activeCategory, page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page]);
 
-    // Read URL params on mount
-    useEffect(() => {
-        const q  = searchParams.get('q');
-        const cat = searchParams.get('category');
-        if (q)   setSearchTerm(q);
-        if (cat) setActiveCategory(cat);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    // ── Book event ────────────────────────────────────────────
+    // -- Book event --------------------------------------------
     const handleBook = async (eventId) => {
         setBooking({ loading: true, error: null, success: false });
         try {
@@ -100,16 +113,22 @@ export default function BrowseEvents() {
     const formatDate = (dateStr) =>
         dateStr
             ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            : '—';
+            : '�';
 
     return (
         <div className="space-y-8 pb-20">
             {/* Header & Search */}
             <div className="flex flex-col gap-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Explore Events</h1>
+                    <h1 className="text-2xl font-bold text-theme tracking-tight">Explore Events</h1>
                     <p className="text-slate-500 text-sm mt-1">
-                        {loading ? 'Loading…' : `${total} event${total !== 1 ? 's' : ''} available`}
+                        {loading
+                            ? 'Loading�'
+                            : `${total} event${total !== 1 ? 's' : ''} available`
+                        }
+                        {fetching && !loading && (
+                            <Loader2 size={12} className="inline ml-2 animate-spin text-slate-600" />
+                        )}
                     </p>
                 </div>
 
@@ -118,8 +137,8 @@ export default function BrowseEvents() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                         <input
                             type="text"
-                            placeholder="Search by name, location…"
-                            className="w-full bg-[#0d0e1a] border border-white/[0.06] rounded-lg pl-9 pr-4 py-2.5
+                            placeholder="Search by name, location�"
+                            className="w-full bg-theme-card border border-theme rounded-lg pl-9 pr-4 py-2.5
                                        text-white text-sm focus:outline-none focus:border-primary-500/50 transition-colors
                                        placeholder:text-slate-600"
                             value={searchTerm}
@@ -138,12 +157,12 @@ export default function BrowseEvents() {
             {/* Category Filters */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
                 {CATEGORIES.map((cat) => (
-                    <button key={cat} onClick={() => setActiveCategory(cat)}
+                    <button key={cat} onClick={() => handleCategoryChange(cat)}
                         className={cn(
                             'whitespace-nowrap px-4 py-1.5 rounded-full text-sm font-medium transition-all border',
                             activeCategory === cat
                                 ? 'bg-primary-600 border-primary-500 text-white'
-                                : 'bg-transparent border-white/[0.06] text-slate-500 hover:text-slate-300 hover:border-white/10'
+                                : 'bg-transparent border-theme text-slate-500 hover:text-slate-300 hover:border-theme-strong'
                         )}>
                         {cat}
                     </button>
@@ -158,10 +177,17 @@ export default function BrowseEvents() {
             )}
 
             {/* Events Grid */}
+            <div className="relative">
+                {/* Thin loading bar */}
+                {fetching && (
+                    <div className="absolute -top-2 left-0 right-0 h-0.5 rounded-full overflow-hidden z-10 bg-white/5">
+                        <div className="h-full w-1/3 bg-primary-500 loading-bar" />
+                    </div>
+                )}
             {loading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {Array.from({ length: 6 }).map((_, i) => (
-                        <div key={i} className="bg-[#0d0e1a] border border-white/[0.06] rounded-xl overflow-hidden animate-pulse">
+                        <div key={i} className="bg-theme-card border border-theme rounded-xl overflow-hidden animate-pulse">
                             <div className="h-48 bg-white/[0.04]" />
                             <div className="p-5 space-y-3">
                                 <div className="h-4 bg-white/[0.04] rounded w-3/4" />
@@ -177,10 +203,10 @@ export default function BrowseEvents() {
                     <p className="text-sm">Try a different search or category</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 transition-opacity duration-300 ${fetching ? 'opacity-50' : 'opacity-100'}`}>
                     {events.map((event) => (
                         <Card key={event._id}
-                            className="p-0 border-white/[0.06] hover:border-primary-500/40 group transition-all
+                            className="p-0 border-theme hover:border-primary-500/40 group transition-all
                                        duration-300 flex flex-col cursor-pointer"
                             onClick={() => { setSelectedEvent(event); setBooking({ loading: false, error: null, success: false }); }}>
                             {/* Image */}
@@ -191,13 +217,13 @@ export default function BrowseEvents() {
                                 />
                                 <div className="absolute top-3 left-3">
                                     <span className="px-2 py-1 rounded-md text-[11px] font-semibold bg-black/60
-                                                     backdrop-blur text-white border border-white/10">
+                                                     backdrop-blur text-white border border-theme-strong">
                                         {event.category}
                                     </span>
                                 </div>
                                 <div className="absolute bottom-3 right-3">
                                     <span className="px-2 py-1 rounded-md text-sm font-bold bg-black/60 backdrop-blur
-                                                     text-white border border-white/10">
+                                                     text-white border border-theme-strong">
                                         {event.price === 0 ? 'FREE' : `$${event.price}`}
                                     </span>
                                 </div>
@@ -233,21 +259,20 @@ export default function BrowseEvents() {
                     ))}
                 </div>
             )}
-
-            {/* Pagination */}
+            </div> {/* end relative wrapper */}
             {!loading && pages > 1 && (
                 <div className="flex items-center justify-center gap-2 pt-2">
                     <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
                         className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white
-                                   bg-[#0d0e1a] border border-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed
-                                   hover:border-white/10 transition-colors">
+                                   bg-theme-card border border-theme disabled:opacity-40 disabled:cursor-not-allowed
+                                   hover:border-theme-strong transition-colors">
                         Previous
                     </button>
                     <span className="text-slate-500 text-sm">Page {page} of {pages}</span>
                     <button onClick={() => setPage((p) => Math.min(pages, p + 1))} disabled={page === pages}
                         className="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white
-                                   bg-[#0d0e1a] border border-white/[0.06] disabled:opacity-40 disabled:cursor-not-allowed
-                                   hover:border-white/10 transition-colors">
+                                   bg-theme-card border border-theme disabled:opacity-40 disabled:cursor-not-allowed
+                                   hover:border-theme-strong transition-colors">
                         Next
                     </button>
                 </div>
@@ -259,11 +284,11 @@ export default function BrowseEvents() {
                     <div className="absolute inset-0 bg-black/70 backdrop-blur-sm"
                          onClick={() => setSelectedEvent(null)} />
                     <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto
-                                    bg-[#0d0e1a] border border-white/10 rounded-2xl shadow-2xl">
+                                    bg-theme-card border border-theme-strong rounded-2xl shadow-2xl">
                         {/* Close */}
                         <button onClick={() => setSelectedEvent(null)}
                             className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-black/60 text-white
-                                       flex items-center justify-center border border-white/10 hover:bg-white/10 transition-all">
+                                       flex items-center justify-center border border-theme-strong hover:bg-white/10 transition-all">
                             <X size={16} />
                         </button>
 
@@ -285,7 +310,7 @@ export default function BrowseEvents() {
                                 </span>
                             </div>
 
-                            <h2 className="text-xl font-bold text-white mb-3">{selectedEvent.title}</h2>
+                            <h2 className="text-xl font-bold text-theme mb-3">{selectedEvent.title}</h2>
                             <p className="text-slate-400 text-sm leading-relaxed mb-6">{selectedEvent.description}</p>
 
                             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -322,7 +347,7 @@ export default function BrowseEvents() {
                             )}
                             {booking.success && (
                                 <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-4">
-                                    <CheckCircle size={14} /> Booking successful! Redirecting to your bookings…
+                                    <CheckCircle size={14} /> Booking successful! Redirecting to your bookings�
                                 </div>
                             )}
 

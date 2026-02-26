@@ -18,7 +18,7 @@ export default function PageWrapper({
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     {(title || description) && (
                         <div>
-                            {title && <h1 className="text-3xl font-bold text-white">{title}</h1>}
+                            {title && <h1 className="text-3xl font-bold text-theme">{title}</h1>}
                             {description && <p className="text-slate-400 mt-1">{description}</p>}
                         </div>
                     )}

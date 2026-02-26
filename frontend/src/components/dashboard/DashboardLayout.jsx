@@ -8,7 +8,20 @@ export default function DashboardLayout() {
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(true);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        // Restore from localStorage; default to dark
+        return localStorage.getItem('theme') !== 'light';
+    });
+
+    // Apply theme class to <html> whenever isDarkMode changes
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.remove('light');
+        } else {
+            document.documentElement.classList.add('light');
+        }
+        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    }, [isDarkMode]);
 
     // Close modals on Escape
     useEffect(() => {
@@ -38,10 +51,13 @@ export default function DashboardLayout() {
     }), [showSearchModal, showNotifications, showProfileMenu, isDarkMode]);
 
     return (
-        <div className="flex flex-col min-h-screen w-full bg-[#020617] text-white overflow-x-hidden">
+        <div className="flex flex-col min-h-screen w-full text-white overflow-x-hidden"
+             style={{ backgroundColor: 'var(--app-bg)', color: 'var(--app-text)', transition: 'background-color 0.3s, color 0.3s' }}>
             {/* Background decor */}
-            <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-600/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
-            <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+            <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] pointer-events-none -z-10"
+                 style={{ backgroundColor: 'var(--app-blob1)' }} />
+            <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] pointer-events-none -z-10"
+                 style={{ backgroundColor: 'var(--app-blob2)' }} />
 
             {/* Top Navbar (contains all nav links) */}
             <TopNavbar

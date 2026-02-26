@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Bell, CheckCircle2, Info, Ticket, Calendar, Zap, Loader2, AlertCircle, Check } from 'lucide-react';
 import { useApi, useMutation } from '../hooks/useApi';
 import { getNotifications, markAsRead, markAllAsRead } from '../api/notifications';
@@ -46,7 +46,7 @@ export default function Notifications() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-white">Notifications</h1>
+                    <h1 className="text-xl font-bold text-theme">Notifications</h1>
                     <p className="text-slate-500 text-sm mt-1">
                         {unread.length ? `${unread.length} unread notification${unread.length !== 1 ? 's' : ''}` : 'All caught up'}
                     </p>
@@ -63,7 +63,7 @@ export default function Notifications() {
 
             {loading && (
                 <div className="flex items-center justify-center py-20 text-slate-500">
-                    <Loader2 size={20} className="animate-spin mr-2" /> Loading…
+                    <Loader2 size={20} className="animate-spin mr-2" /> Loading�
                 </div>
             )}
 
@@ -89,8 +89,8 @@ export default function Notifications() {
                             className={`w-full text-left rounded-xl border px-5 py-4 flex items-start gap-4
                                         transition-all duration-200
                                         ${n.isRead
-                                            ? 'bg-[#0d0e1a]/50 border-white/[0.04] opacity-60'
-                                            : 'bg-[#0d0e1a] border-white/[0.08] hover:border-primary-500/30'}`}>
+                                            ? 'bg-theme-card/50 border-theme opacity-60'
+                                            : 'bg-theme-card border-theme-strong hover:border-primary-500/30'}`}>
                             <div className={`mt-0.5 shrink-0 w-8 h-8 flex items-center justify-center rounded-full
                                             ${n.isRead ? 'bg-white/[0.04]' : 'bg-white/[0.07]'}`}>
                                 {readingId === n._id

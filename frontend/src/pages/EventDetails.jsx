@@ -125,7 +125,7 @@ const EventDetails = () => {
                                 </span>
                             )}
                             {isPast && (
-                                <span className="px-4 py-1.5 bg-white/5 border border-white/10 text-text-muted text-xs font-black uppercase tracking-widest rounded-lg">
+                                <span className="px-4 py-1.5 bg-white/5 border border-theme-strong text-text-muted text-xs font-black uppercase tracking-widest rounded-lg">
                                     Past Event
                                 </span>
                             )}
@@ -185,7 +185,7 @@ const EventDetails = () => {
                             className={`w-full sm:w-auto px-10 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all text-lg ${isBooked
                                 ? 'bg-success/10 text-success border border-success/20 cursor-default'
                                 : isFull || isPast
-                                    ? 'bg-white/5 text-text-muted cursor-not-allowed border border-white/10'
+                                    ? 'bg-white/5 text-text-muted cursor-not-allowed border border-theme-strong'
                                     : 'btn-primary'
                                 }`}
                         >

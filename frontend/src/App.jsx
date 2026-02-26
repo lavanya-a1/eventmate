@@ -11,20 +11,54 @@ import Profile from './pages/Profile';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+
+// Admin
+import AdminLayout from './admin/components/layout/AdminLayout';
+import AdminDashboardHome from './admin/pages/AdminDashboardHome';
+import EventManagement from './admin/pages/EventManagement';
+import UserManagement from './admin/pages/UserManagement';
+import BookingManagement from './admin/pages/BookingManagement';
+import PaymentMonitoring from './admin/pages/PaymentMonitoring';
+import QRValidation from './admin/pages/QRValidation';
+import NotificationsReminders from './admin/pages/NotificationsReminders';
+import FeedbackModeration from './admin/pages/FeedbackModeration';
+import SystemLogs from './admin/pages/SystemLogs';
+import Settings from './admin/pages/Settings';
+
 import './index.css';
 
 /** Redirect logged-in users away from auth pages */
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return user ? <Navigate to="/dashboard" replace /> : children;
+  if (!user) return children;
+  return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
 }
 
-/** Redirect unauthenticated users to /login */
+/** Redirect unauthenticated users to /login; redirect admins to /admin */
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === 'admin') return <Navigate to="/admin" replace />;
+  return children;
+}
+
+/** Admin-only route — redirects non-admins to /dashboard */
+function AdminRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
+/** Catch-all: send admins to /admin, users to /dashboard, guests to / */
+function DefaultRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/" replace />;
+  return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
 }
 
 function AppRoutes() {
@@ -47,7 +81,21 @@ function AppRoutes() {
         <Route path="/home" element={<Navigate to="/dashboard" replace />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Admin dashboard */}
+      <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+        <Route path="/admin" element={<AdminDashboardHome />} />
+        <Route path="/admin/events" element={<EventManagement />} />
+        <Route path="/admin/users" element={<UserManagement />} />
+        <Route path="/admin/bookings" element={<BookingManagement />} />
+        <Route path="/admin/payments" element={<PaymentMonitoring />} />
+        <Route path="/admin/qr" element={<QRValidation />} />
+        <Route path="/admin/notifications" element={<NotificationsReminders />} />
+        <Route path="/admin/feedback" element={<FeedbackModeration />} />
+        <Route path="/admin/logs" element={<SystemLogs />} />
+        <Route path="/admin/settings" element={<Settings />} />
+      </Route>
+
+      <Route path="*" element={<DefaultRedirect />} />
     </Routes>
   );
 }

@@ -76,7 +76,7 @@ const Home = () => {
                 <div className={`glass-card overflow-hidden transition-all duration-300 h-full flex flex-col ${isCompleted ? 'border-white/5' : 'hover:border-primary/30'}`}>
                     <div className="p-6 md:p-8 flex flex-col h-full">
                         <div className="flex justify-between items-start mb-6">
-                            <span className={`px-3 py-1 border text-[10px] font-black uppercase tracking-widest rounded-lg ${isCompleted ? 'bg-white/5 border-white/10 text-text-muted' : 'bg-primary/10 border-primary/20 text-primary'}`}>
+                            <span className={`px-3 py-1 border text-[10px] font-black uppercase tracking-widest rounded-lg ${isCompleted ? 'bg-white/5 border-theme-strong text-text-muted' : 'bg-primary/10 border-primary/20 text-primary'}`}>
                                 {isCompleted ? 'Past Event' : (event.category || 'Event')}
                             </span>
                             <div className="text-right">
@@ -123,7 +123,7 @@ const Home = () => {
                                     {isBooked ? 'Registered' : event.availableSeats <= 0 ? 'Sold Out' : 'Register Now'}
                                 </button>
                             ) : (
-                                <div className="flex-1 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold bg-white/5 text-text-muted border border-white/10 cursor-default">
+                                <div className="flex-1 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold bg-white/5 text-text-muted border border-theme-strong cursor-default">
                                     <CheckCircle2 size={18} />
                                     Event Completed
                                 </div>
@@ -187,7 +187,7 @@ const Home = () => {
                     {/* Search Bar */}
                     <div className="max-w-2xl mx-auto relative group mb-16">
                         <div className="absolute inset-0 bg-primary/20 blur-2xl group-focus-within:bg-primary/30 transition-all rounded-3xl" />
-                        <div className="relative glass-card border-white/10 flex items-center p-2">
+                        <div className="relative glass-card border-theme-strong flex items-center p-2">
                             <Search className="ml-4 text-text-muted" size={24} />
                             <input
                                 type="text"

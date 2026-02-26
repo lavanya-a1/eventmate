@@ -64,7 +64,7 @@ export default function DashboardPageTemplate() {
                     {/* Content Card */}
                     <Card>
                         <div className="space-y-4">
-                            <h3 className="text-lg font-bold text-white">Section Title</h3>
+                            <h3 className="text-lg font-bold text-theme">Section Title</h3>
                             <p className="text-slate-400">
                                 This is your main content area. It will adapt to the sidebar state 
                                 and remain persistent across navigation.
@@ -84,7 +84,7 @@ export default function DashboardPageTemplate() {
                                 <Card className="transition-all">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h4 className="font-bold text-white hover:text-primary-400 transition-colors">
+                                            <h4 className=" font-bold text-theme hover:text-primary-400 transition-colors">
                                                 {item.title}
                                             </h4>
                                             <p className="text-sm text-slate-400 mt-1">
@@ -103,7 +103,7 @@ export default function DashboardPageTemplate() {
                 <div className="space-y-6">
                     {/* Info Card */}
                     <Card>
-                        <h4 className="font-bold text-white mb-4">Quick Info</h4>
+                        <h4 className=" font-bold text-theme mb-4">Quick Info</h4>
                         <div className="space-y-3">
                             <div>
                                 <p className="text-xs text-slate-500 uppercase tracking-wider">Status</p>
@@ -126,7 +126,7 @@ export default function DashboardPageTemplate() {
 
                     {/* Action Card */}
                     <Card>
-                        <h4 className="font-bold text-white mb-4">Actions</h4>
+                        <h4 className=" font-bold text-theme mb-4">Actions</h4>
                         <div className="space-y-2">
                             <Button 
                                 onClick={handleAction}
@@ -147,7 +147,7 @@ export default function DashboardPageTemplate() {
 
                     {/* Badge Examples */}
                     <Card>
-                        <h4 className="font-bold text-white mb-4">Tags</h4>
+                        <h4 className=" font-bold text-theme mb-4">Tags</h4>
                         <div className="flex flex-wrap gap-2">
                             <Badge variant="primary">Primary</Badge>
                             <Badge variant="success">Success</Badge>

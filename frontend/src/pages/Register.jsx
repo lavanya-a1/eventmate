@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Shield, Zap, Headphones, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const Register = () => {
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
@@ -10,17 +11,34 @@ const Register = () => {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
+    const { setUser } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
         setError('');
+
+        if (!formData.name.trim() || !formData.email.trim() || !formData.password) {
+            setError('All fields are required');
+            return;
+        }
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
+        setLoading(true);
         try {
-            await api.post('/auth/register', formData);
-            alert('Registration successful! Please login.');
-            navigate('/login');
+            const { data } = await api.post('/auth/register', formData);
+            // Auto-login: store token and user, then go to dashboard
+            localStorage.setItem('token', data.token);
+            setUser(data.user);
+            navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || err.response?.data?.error || 'Registration failed');
+            setError(
+                err.response?.data?.message ||
+                err.response?.data?.error ||
+                'Registration failed. Please check your details and try again.'
+            );
         } finally {
             setLoading(false);
         }
