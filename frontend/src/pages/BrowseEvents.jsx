@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     Search, MapPin, Calendar, Filter, CreditCard,
@@ -105,7 +105,7 @@ export default function BrowseEvents() {
                 navigate('/bookings');
             }, 1200);
         } catch (err) {
-            const msg = err?.message || 'Booking failed';
+            const msg = err?.response?.data?.message || err?.message || 'Booking failed';
             setBooking({ loading: false, error: msg, success: false });
         }
     };
@@ -113,7 +113,7 @@ export default function BrowseEvents() {
     const formatDate = (dateStr) =>
         dateStr
             ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            : '�';
+            : 'ï¿½';
 
     return (
         <div className="space-y-8 pb-20">
@@ -123,7 +123,7 @@ export default function BrowseEvents() {
                     <h1 className="text-2xl font-bold text-theme tracking-tight">Explore Events</h1>
                     <p className="text-slate-500 text-sm mt-1">
                         {loading
-                            ? 'Loading�'
+                            ? 'Loadingï¿½'
                             : `${total} event${total !== 1 ? 's' : ''} available`
                         }
                         {fetching && !loading && (
@@ -137,7 +137,7 @@ export default function BrowseEvents() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                         <input
                             type="text"
-                            placeholder="Search by name, location�"
+                            placeholder="Search by name, locationï¿½"
                             className="w-full bg-theme-card border border-theme rounded-lg pl-9 pr-4 py-2.5
                                        text-white text-sm focus:outline-none focus:border-primary-500/50 transition-colors
                                        placeholder:text-slate-600"
@@ -248,11 +248,19 @@ export default function BrowseEvents() {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); handleBook(event._id); }}
-                                    disabled={booking.loading}
-                                    className="mt-4 w-full py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white
-                                               text-sm font-medium transition-colors disabled:opacity-60">
-                                    Book Now
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        const isPast = new Date(event.date) < new Date();
+                                        if (!isPast) handleBook(event._id);
+                                        else { setSelectedEvent(event); setBooking({ loading: false, error: null, success: false }); }
+                                    }}
+                                    disabled={booking.loading || new Date(event.date) < new Date()}
+                                    className={`mt-4 w-full py-2 rounded-lg text-white text-sm font-medium transition-colors disabled:opacity-60 ${
+                                        new Date(event.date) < new Date()
+                                            ? 'bg-slate-600 cursor-not-allowed'
+                                            : 'bg-primary-600 hover:bg-primary-500'
+                                    }`}>
+                                    {new Date(event.date) < new Date() ? 'Event Ended' : 'Book Now'}
                                 </button>
                             </div>
                         </Card>
@@ -339,26 +347,43 @@ export default function BrowseEvents() {
                                 </div>
                             </div>
 
-                            {/* Booking error/success */}
-                            {booking.error && (
-                                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm mb-4">
-                                    <AlertCircle size={14} /> {booking.error}
-                                </div>
-                            )}
-                            {booking.success && (
-                                <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-4">
-                                    <CheckCircle size={14} /> Booking successful! Redirecting to your bookings�
-                                </div>
-                            )}
-
-                            <button
-                                onClick={() => handleBook(selectedEvent._id)}
-                                disabled={booking.loading || booking.success}
-                                className="w-full py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-semibold
-                                           text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
-                                {booking.loading && <Loader2 size={16} className="animate-spin" />}
-                                {booking.success ? 'Booked!' : 'Secure Your Ticket'}
-                            </button>
+                            {/* Booking error/success + action */}
+                            {(() => {
+                                const isPast = selectedEvent && new Date(selectedEvent.date) < new Date();
+                                const isFull = selectedEvent && (selectedEvent.availableSeats <= 0);
+                                return (
+                                    <>
+                                        {booking.error && (
+                                            <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm mb-4">
+                                                <AlertCircle size={14} /> {booking.error}
+                                            </div>
+                                        )}
+                                        {booking.success && (
+                                            <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-4">
+                                                <CheckCircle size={14} /> Booking successful! Redirecting...
+                                            </div>
+                                        )}
+                                        {isPast ? (
+                                            <div className="w-full py-3 rounded-xl bg-slate-800 text-slate-400 font-semibold text-sm text-center border border-slate-700">
+                                                This event has already ended
+                                            </div>
+                                        ) : isFull ? (
+                                            <div className="w-full py-3 rounded-xl bg-red-500/10 text-red-400 font-semibold text-sm text-center border border-red-500/20">
+                                                Sold Out
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleBook(selectedEvent._id)}
+                                                disabled={booking.loading || booking.success}
+                                                className="w-full py-3 rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-semibold
+                                                           text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                                                {booking.loading && <Loader2 size={16} className="animate-spin" />}
+                                                {booking.success ? 'Booked!' : 'Secure Your Ticket'}
+                                            </button>
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>
@@ -366,4 +391,3 @@ export default function BrowseEvents() {
         </div>
     );
 }
-
