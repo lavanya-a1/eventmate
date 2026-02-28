@@ -457,41 +457,51 @@ export default function AdminDashboardHome() {
 
         {/* Category Breakdown */}
         <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Event Categories</h3>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-0.5">Event Categories</h3>
           <p className="text-xs text-gray-400 dark:text-slate-500 mb-4">Distribution by type</p>
-          {loading ? <Skeleton className="w-full h-36" /> : categories.length === 0 ? (
+          {loading ? (
+            <div className="flex gap-4">
+              <Skeleton className="w-28 h-28 rounded-full shrink-0" />
+              <div className="flex-1 space-y-2 pt-1">
+                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="w-full h-3 rounded" />)}
+              </div>
+            </div>
+          ) : categories.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-gray-400">
               <Calendar size={24} className="mb-2 opacity-30" />
               <p className="text-xs">No data yet</p>
             </div>
           ) : (
-            <>
-              <ResponsiveContainer width="100%" height={130}>
-                <PieChart>
-                  <Pie data={categories} cx="50%" cy="50%" innerRadius={36} outerRadius={56} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                    {categories.map((e, i) => <Cell key={i} fill={e.color} />)}
-                  </Pie>
-                  <Tooltip formatter={v => `${v}%`} contentStyle={tooltipStyle} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="space-y-1.5 mt-2">
-                {categories.slice(0, 5).map(cat => (
-                  <div key={cat.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full shrink-0" style={{ background: cat.color }} />
-                      <span className="text-xs text-gray-600 dark:text-slate-300 truncate max-w-[110px]">{cat.name}</span>
-                    </div>
-                    <span className="text-xs font-semibold text-gray-900 dark:text-white">{cat.value}%</span>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              {/* Donut – left */}
+              <div className="shrink-0">
+                <ResponsiveContainer width={120} height={120}>
+                  <PieChart>
+                    <Pie data={categories} cx="50%" cy="50%" innerRadius={34} outerRadius={54} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                      {categories.map((e, i) => <Cell key={i} fill={e.color} />)}
+                    </Pie>
+                    <Tooltip formatter={v => `${v}%`} contentStyle={tooltipStyle} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Legend – right */}
+              <div className="space-y-2.5">
+                {categories.slice(0, 6).map(cat => (
+                  <div key={cat.name} className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: cat.color }} />
+                    <span className="text-xs text-gray-600 dark:text-slate-300 truncate max-w-[90px]">{cat.name}</span>
+                    <span className="text-xs text-gray-400 dark:text-slate-500 shrink-0">{cat.raw} events</span>
+                    <span className="text-xs font-semibold text-gray-900 dark:text-white shrink-0">({cat.value}%)</span>
                   </div>
                 ))}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
 
-      {/* â”€â”€ Revenue + Activity â”€â”€ */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      {/* ── Revenue + Activity ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-6">
 
         {/* Revenue Area */}
         <div className="xl:col-span-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-5 shadow-sm">
