@@ -1,5 +1,5 @@
 ﻿import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Bell, Search, User, Moon, Sun, Menu, X, ChevronDown, LogOut, Settings } from 'lucide-react';
+import { Bell, Search, User, Moon, Sun, Menu, X, ChevronDown, LogOut } from 'lucide-react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { cn } from '../ui';
 import { useAuth } from '../../context/AuthContext';
@@ -223,11 +223,7 @@ export default function TopNavbar({
                                                    hover:text-white hover:bg-white/[0.04] transition-colors text-sm">
                                         <User size={14} /> View Profile
                                     </Link>
-                                    <button onClick={() => setShowProfileMenu(false)}
-                                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-slate-400
-                                                   hover:text-white hover:bg-white/[0.04] transition-colors text-sm text-left">
-                                        <Settings size={14} /> Settings
-                                    </button>
+
                                 </nav>
                                 <div className="h-px bg-white/[0.06]" />
                                 <button onClick={() => { setShowProfileMenu(false); logout(); }}
