@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, Sun, Moon, Bell, Search, ChevronDown, LogOut, Settings, Zap } from 'lucide-react';
+import { Menu, Sun, Moon, Search, ChevronDown, LogOut, Settings, Zap } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useTheme } from '../../context/AdminThemeContext';
 import { useAuth } from '../../../context/AuthContext';
@@ -88,12 +88,6 @@ export default function AdminTopNavbar({ onMenuClick, sidebarCollapsed }) {
           title="Toggle theme"
         >
           {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
-        {/* Notifications */}
-        <button className="relative p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-all">
-          <Bell size={18} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-purple-400 ring-2 ring-slate-900" />
         </button>
 
         {/* Profile */}

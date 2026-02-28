@@ -62,6 +62,6 @@ export const deleteFeedback = (id) => api.delete(`/admin/feedback/${id}`);
 export const getSystemLogs = (params) => api.get('/admin/logs', { params });
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
-export const getAdminProfile = () => api.get('/admin/profile');
-export const updateAdminProfile = (data) => api.put('/admin/profile', data);
-export const changePassword = (data) => api.post('/admin/change-password', data);
+export const getAdminProfile = () => api.get('/admin/settings/profile');
+export const updateAdminProfile = (data) => api.put('/admin/settings/profile', data);
+export const changePassword = (data) => api.put('/admin/settings/password', data);

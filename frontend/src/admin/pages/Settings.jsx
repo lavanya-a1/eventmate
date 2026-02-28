@@ -1,10 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Save, Shield, User as UserIcon, Palette, Eye, EyeOff, Lock, Bell, Check } from 'lucide-react';
-import AdminButton from '../components/ui/AdminButton';
+import { Save, Shield, User as UserIcon, Palette, Eye, EyeOff, Lock, Check, Sun, Moon, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from '../components/ui/Toast';
 import { useTheme } from '../context/AdminThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { getAdminProfile, updateAdminProfile, changePassword } from '../api/adminApi';
+
+const inputCls =
+  'w-full px-3.5 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all shadow-sm';
+const readonlyCls =
+  'w-full px-3.5 py-2.5 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 text-gray-500 dark:text-slate-400 text-sm cursor-not-allowed select-none';
+const labelCls = 'block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1.5';
+
+function SectionCard({ title, description, children }) {
+  return (
+    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+      <div className="px-6 py-5 border-b border-gray-100 dark:border-slate-800">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
+        {description && <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">{description}</p>}
+      </div>
+      <div className="px-6 py-6">{children}</div>
+    </div>
+  );
+}
 
 export default function Settings() {
   const { theme, toggleTheme } = useTheme();
@@ -12,37 +29,51 @@ export default function Settings() {
 
   const [activeTab, setActiveTab] = useState('profile');
   const [profileForm, setProfileForm] = useState({ name: '', email: '', phone: '', bio: '' });
+  const [profileLoading, setProfileLoading] = useState(true);
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
   const [showPw, setShowPw] = useState({ current: false, newPw: false, confirm: false });
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPw, setSavingPw] = useState(false);
-  const [notifications, setNotifications] = useState({ email: true, push: true, bookings: true, payments: true, reports: false });
 
   useEffect(() => {
     const load = async () => {
+      setProfileLoading(true);
       try {
         const res = await getAdminProfile();
-        const data = res.data?.data || user;
-        setProfileForm({ name: data?.name || '', email: data?.email || '', phone: data?.phone || '', bio: data?.bio || '' });
-      } catch (_) {
-        setProfileForm({ name: user?.name || '', email: user?.email || '', phone: '', bio: '' });
+        const data = res.data?.data;
+        if (data) {
+          setProfileForm({
+            name: data.name || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            bio: data.bio || '',
+          });
+        }
+      } catch (err) {
+        toast.error('Failed to load profile');
+      } finally {
+        setProfileLoading(false);
       }
     };
     load();
-  }, [user]);
+  }, []);
 
   const handleProfileSave = async (e) => {
-    e.preventDefault(); setSavingProfile(true);
+    e.preventDefault();
+    setSavingProfile(true);
     try {
-      const res = await updateAdminProfile(profileForm);
-      setUser(u => ({ ...u, ...profileForm }));
+      const res = await updateAdminProfile({ name: profileForm.name, phone: profileForm.phone, bio: profileForm.bio });
+      const updated = res.data?.data;
+      if (updated) {
+        setProfileForm(f => ({ ...f, name: updated.name || f.name, phone: updated.phone || '', bio: updated.bio || '' }));
+        setUser(u => ({ ...u, name: updated.name }));
+      }
       toast.success('Profile updated successfully');
-    } catch (_) {
-      // Optimistic update for demo
-      setUser(u => ({ ...u, ...profileForm }));
-      toast.success('Profile updated');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to update profile');
+    } finally {
+      setSavingProfile(false);
     }
-    setSavingProfile(false);
   };
 
   const handlePasswordChange = async (e) => {
@@ -54,227 +85,236 @@ export default function Settings() {
       await changePassword({ currentPassword: pwForm.current, newPassword: pwForm.newPw });
       toast.success('Password changed successfully');
       setPwForm({ current: '', newPw: '', confirm: '' });
-    } catch (_) { toast.error('Failed to change password'); }
-    setSavingPw(false);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to change password');
+    } finally {
+      setSavingPw(false);
+    }
   };
 
-  const inputCls = 'w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 transition-all';
-  const labelCls = 'block text-xs font-medium text-slate-400 mb-1.5';
+  const initials = profileForm.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD';
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: UserIcon },
     { id: 'security', label: 'Security', icon: Shield },
-    { id: 'theme', label: 'Appearance', icon: Palette },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'appearance', label: 'Appearance', icon: Palette },
   ];
 
-  const initials = profileForm.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD';
-
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div>
-        <h2 className="text-2xl font-bold text-white">Settings</h2>
-        <p className="text-sm text-slate-400 mt-0.5">Manage your admin profile, security, and preferences</p>
+    <div className="max-w-5xl space-y-1">
+      {/* Page header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Settings</h1>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">Manage your profile, security, and appearance</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Tab nav */}
-        <div className="lg:col-span-1 space-y-1">
+      <div className="flex gap-8">
+        {/* Sidebar nav */}
+        <nav className="w-48 shrink-0 space-y-0.5">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${
                 activeTab === tab.id
-                  ? 'bg-purple-600/20 text-purple-300 ring-1 ring-purple-500/30'
-                  : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  ? 'bg-violet-50 dark:bg-violet-600/15 text-violet-700 dark:text-violet-300'
+                  : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              <tab.icon size={16} />
+              <tab.icon size={15} className={activeTab === tab.id ? 'text-violet-600 dark:text-violet-400' : ''} />
               {tab.label}
             </button>
           ))}
-        </div>
+        </nav>
 
-        {/* Tab content */}
-        <div className="lg:col-span-3 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-6">
-          {/* Profile */}
+        {/* Content */}
+        <div className="flex-1 space-y-5">
+
+          {/* ── Profile ── */}
           {activeTab === 'profile' && (
-            <form onSubmit={handleProfileSave} className="space-y-6">
-              <h3 className="text-base font-semibold text-white border-b border-white/10 pb-4">Admin Profile</h3>
-
-              {/* Avatar */}
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-xl">
-                  {initials}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-white">{profileForm.name || 'Admin'}</p>
-                  <p className="text-xs text-slate-400">{profileForm.email}</p>
-                  <p className="text-xs text-purple-400 font-medium mt-0.5 capitalize">{user?.role || 'admin'}</p>
-                </div>
+            profileLoading ? (
+              <div className="flex items-center justify-center py-20 text-gray-400">
+                <Loader2 size={22} className="animate-spin mr-2" /> Loading profile…
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>Full Name</label>
-                  <input value={profileForm.name} onChange={e => setProfileForm(f => ({...f, name: e.target.value}))} className={inputCls} placeholder="Your full name" />
-                </div>
-                <div>
-                  <label className={labelCls}>Email Address</label>
-                  <input type="email" value={profileForm.email} onChange={e => setProfileForm(f => ({...f, email: e.target.value}))} className={inputCls} placeholder="admin@company.com" />
-                </div>
-                <div>
-                  <label className={labelCls}>Phone Number</label>
-                  <input type="tel" value={profileForm.phone} onChange={e => setProfileForm(f => ({...f, phone: e.target.value}))} className={inputCls} placeholder="+1 (555) 000-0000" />
-                </div>
-              </div>
-
-              <div>
-                <label className={labelCls}>Bio</label>
-                <textarea value={profileForm.bio} onChange={e => setProfileForm(f => ({...f, bio: e.target.value}))} rows={3} className={inputCls + ' resize-none'} placeholder="Tell us about yourself..." />
-              </div>
-
-              <div className="flex justify-end">
-                <AdminButton type="submit" loading={savingProfile} icon={Save}>Save Profile</AdminButton>
-              </div>
-            </form>
-          )}
-
-          {/* Security */}
-          {activeTab === 'security' && (
-            <form onSubmit={handlePasswordChange} className="space-y-6">
-              <h3 className="text-base font-semibold text-white border-b border-white/10 pb-4">Security Settings</h3>
-
-              <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-sm text-blue-300">
-                <div className="flex items-center gap-2 mb-1"><Shield size={14} /><span className="font-semibold">Security Tip</span></div>
-                Use a strong password with at least 8 characters, including uppercase, numbers, and symbols.
-              </div>
-
-              {[
-                { key: 'current', label: 'Current Password', placeholder: 'Enter current password' },
-                { key: 'newPw', label: 'New Password', placeholder: 'Enter new password (min 8 chars)' },
-                { key: 'confirm', label: 'Confirm New Password', placeholder: 'Repeat new password' },
-              ].map(({ key, label, placeholder }) => (
-                <div key={key}>
-                  <label className={labelCls}>{label}</label>
-                  <div className="relative">
-                    <input
-                      type={showPw[key] ? 'text' : 'password'}
-                      value={pwForm[key]}
-                      onChange={e => setPwForm(f => ({...f, [key]: e.target.value}))}
-                      className={inputCls + ' pr-10'}
-                      placeholder={placeholder}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPw(s => ({...s, [key]: !s[key]}))}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                    >
-                      {showPw[key] ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
+            ) : (
+              <form onSubmit={handleProfileSave} className="space-y-5">
+                <SectionCard title="Identity" description="Your account info. Email cannot be changed here.">
+                  <div className="flex items-center gap-5 mb-6 pb-6 border-b border-gray-100 dark:border-slate-800">
+                    <div className="w-16 h-16 rounded-xl bg-violet-600 flex items-center justify-center text-xl font-bold text-white shrink-0 select-none">
+                      {initials}
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-gray-900 dark:text-white">{profileForm.name || '—'}</p>
+                      <p className="text-sm text-gray-500 dark:text-slate-400">{profileForm.email}</p>
+                      <span className="inline-flex mt-1.5 items-center px-2 py-0.5 rounded-md bg-violet-50 dark:bg-violet-600/15 text-violet-700 dark:text-violet-300 text-xs font-semibold capitalize">
+                        {user?.role || 'admin'}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
 
-              {pwForm.newPw && pwForm.confirm && (
-                <div className={`flex items-center gap-2 text-xs ${pwForm.newPw === pwForm.confirm ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {pwForm.newPw === pwForm.confirm ? <Check size={12} /> : <Lock size={12} />}
-                  {pwForm.newPw === pwForm.confirm ? 'Passwords match' : 'Passwords do not match'}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                      <label className={labelCls}>Full Name</label>
+                      <input
+                        value={profileForm.name}
+                        onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))}
+                        className={inputCls}
+                        placeholder="Your full name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>
+                        Email Address
+                        <span className="ml-2 text-xs font-normal text-gray-400 dark:text-slate-500">(read-only)</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={profileForm.email}
+                        readOnly
+                        className={readonlyCls}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Phone Number</label>
+                      <input
+                        type="tel"
+                        value={profileForm.phone}
+                        onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))}
+                        className={inputCls}
+                        placeholder="+1 (555) 000-0000"
+                      />
+                    </div>
+                  </div>
+                </SectionCard>
+
+                <SectionCard title="Bio" description="A short description about yourself.">
+                  <textarea
+                    value={profileForm.bio}
+                    onChange={e => setProfileForm(f => ({ ...f, bio: e.target.value }))}
+                    rows={3}
+                    className={inputCls + ' resize-none'}
+                    placeholder="Tell us about yourself…"
+                  />
+                </SectionCard>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={savingProfile}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold shadow-sm transition-colors"
+                  >
+                    {savingProfile ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    Save Changes
+                  </button>
                 </div>
-              )}
+              </form>
+            )
+          )}
+
+          {/* ── Security ── */}
+          {activeTab === 'security' && (
+            <form onSubmit={handlePasswordChange} className="space-y-5">
+              <SectionCard title="Change Password" description="Use a strong password with at least 8 characters.">
+                <div className="flex items-start gap-3 mb-6 p-3.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20">
+                  <AlertCircle size={15} className="text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    After changing your password, you may need to re-authenticate on other devices.
+                  </p>
+                </div>
+
+                <div className="space-y-5">
+                  {[
+                    { key: 'current', label: 'Current Password', placeholder: 'Enter your current password' },
+                    { key: 'newPw', label: 'New Password', placeholder: 'At least 8 characters' },
+                    { key: 'confirm', label: 'Confirm New Password', placeholder: 'Repeat your new password' },
+                  ].map(({ key, label, placeholder }) => (
+                    <div key={key}>
+                      <label className={labelCls}>{label}</label>
+                      <div className="relative">
+                        <input
+                          type={showPw[key] ? 'text' : 'password'}
+                          value={pwForm[key]}
+                          onChange={e => setPwForm(f => ({ ...f, [key]: e.target.value }))}
+                          className={inputCls + ' pr-10'}
+                          placeholder={placeholder}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPw(s => ({ ...s, [key]: !s[key] }))}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+                        >
+                          {showPw[key] ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {pwForm.newPw && pwForm.confirm && (
+                    <div className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md ${
+                      pwForm.newPw === pwForm.confirm
+                        ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                        : 'bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400'
+                    }`}>
+                      {pwForm.newPw === pwForm.confirm ? <Check size={12} /> : <Lock size={12} />}
+                      {pwForm.newPw === pwForm.confirm ? 'Passwords match' : 'Passwords do not match'}
+                    </div>
+                  )}
+                </div>
+              </SectionCard>
 
               <div className="flex justify-end">
-                <AdminButton type="submit" loading={savingPw} icon={Lock}>Change Password</AdminButton>
+                <button
+                  type="submit"
+                  disabled={savingPw}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white text-sm font-semibold shadow-sm transition-colors"
+                >
+                  {savingPw ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
+                  Update Password
+                </button>
               </div>
             </form>
           )}
 
-          {/* Theme */}
-          {activeTab === 'theme' && (
-            <div className="space-y-6">
-              <h3 className="text-base font-semibold text-white border-b border-white/10 pb-4">Appearance</h3>
-
-              <div>
-                <p className="text-sm font-medium text-white mb-4">Color Mode</p>
-                <div className="grid grid-cols-2 gap-3">
-                  {['dark', 'light'].map(t => (
+          {/* ── Appearance ── */}
+          {activeTab === 'appearance' && (
+            <SectionCard title="Color Mode" description="Choose how the admin panel looks. Saved locally in your browser.">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'light', label: 'Light', icon: Sun, preview: 'bg-gray-50 border-gray-200' },
+                  { id: 'dark', label: 'Dark', icon: Moon, preview: 'bg-slate-900 border-slate-700' },
+                ].map(({ id, label, icon: Icon, preview }) => {
+                  const active = theme === id;
+                  return (
                     <button
-                      key={t}
-                      onClick={() => { if (theme !== t) toggleTheme(); }}
-                      className={`relative p-5 rounded-xl border transition-all text-left ${
-                        theme === t
-                          ? 'border-purple-500/50 bg-purple-600/10 ring-2 ring-purple-500/30'
-                          : 'border-white/10 bg-white/[0.03] hover:border-white/20'
+                      key={id}
+                      onClick={() => { if (theme !== id) toggleTheme(); }}
+                      className={`relative flex items-center gap-4 px-5 py-4 rounded-xl border-2 text-left transition-all ${
+                        active
+                          ? 'border-violet-500 bg-violet-50 dark:bg-violet-600/10'
+                          : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-gray-300 dark:hover:border-slate-600'
                       }`}
                     >
-                      <div className={`w-full h-12 rounded-lg mb-3 ${t === 'dark' ? 'bg-slate-900 border border-white/10' : 'bg-white border border-slate-200'}`}>
-                        <div className={`h-full rounded-lg flex items-center gap-1 px-2`}>
-                          <div className={`w-2 h-2 rounded-full ${t === 'dark' ? 'bg-purple-400' : 'bg-purple-500'}`} />
-                          <div className={`flex-1 h-1 rounded-full ${t === 'dark' ? 'bg-white/20' : 'bg-slate-200'}`} />
-                        </div>
+                      <div className={`w-10 h-10 rounded-lg border ${preview} flex items-center justify-center shrink-0`}>
+                        <Icon size={16} className={id === 'dark' ? 'text-slate-300' : 'text-gray-600'} />
                       </div>
-                      <p className="text-sm font-medium text-white capitalize">{t} Mode</p>
-                      {theme === t && (
-                        <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
+                      <div>
+                        <p className={`text-sm font-semibold ${active ? 'text-violet-700 dark:text-violet-300' : 'text-gray-800 dark:text-white'}`}>{label}</p>
+                        <p className="text-xs text-gray-400 dark:text-slate-500">{id === 'light' ? 'Default' : 'Easy on the eyes'}</p>
+                      </div>
+                      {active && (
+                        <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center">
                           <Check size={10} className="text-white" />
                         </div>
                       )}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-
-              <div>
-                <p className="text-sm font-medium text-white mb-4">Accent Color</p>
-                <div className="flex gap-3">
-                  {['#a855f7', '#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'].map(color => (
-                    <button
-                      key={color}
-                      className="w-8 h-8 rounded-xl border-2 border-white/20 hover:scale-110 transition-transform hover:border-white/50"
-                      style={{ background: color }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
+            </SectionCard>
           )}
 
-          {/* Notifications */}
-          {activeTab === 'notifications' && (
-            <div className="space-y-6">
-              <h3 className="text-base font-semibold text-white border-b border-white/10 pb-4">Notification Preferences</h3>
-
-              <div className="space-y-3">
-                {[
-                  { key: 'email', label: 'Email Notifications', desc: 'Receive notifications via email' },
-                  { key: 'push', label: 'Push Notifications', desc: 'Desktop & browser push notifications' },
-                  { key: 'bookings', label: 'New Bookings', desc: 'Alert when new booking is made' },
-                  { key: 'payments', label: 'Payment Alerts', desc: 'Alert on transactions and refunds' },
-                  { key: 'reports', label: 'Weekly Reports', desc: 'Summary reports every Monday' },
-                ].map(({ key, label, desc }) => (
-                  <div key={key} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.05] transition-colors">
-                    <div>
-                      <p className="text-sm font-medium text-white">{label}</p>
-                      <p className="text-xs text-slate-400">{desc}</p>
-                    </div>
-                    <button
-                      onClick={() => setNotifications(n => ({ ...n, [key]: !n[key] }))}
-                      className={`relative w-10 h-6 rounded-full transition-colors ${notifications[key] ? 'bg-purple-600' : 'bg-white/10'}`}
-                    >
-                      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${notifications[key] ? 'left-5' : 'left-1'}`} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex justify-end">
-                <AdminButton icon={Save} onClick={() => toast.success('Notification preferences saved')}>
-                  Save Preferences
-                </AdminButton>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
