@@ -28,7 +28,7 @@ export default function AdminTopNavbar({ onMenuClick, sidebarCollapsed }) {
   const handleLogout = () => {
     setProfileOpen(false);
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   const pageTitle = ROUTE_LABELS[pathname] || 'Admin';

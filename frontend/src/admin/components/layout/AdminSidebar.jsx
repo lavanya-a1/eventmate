@@ -26,7 +26,7 @@ export default function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobile
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   const NavItem = ({ item }) => (

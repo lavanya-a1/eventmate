@@ -1,26 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Sparkles, CheckCircle2, Chrome } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
 const Landing = () => {
-    const location = useLocation();
     const navigate = useNavigate();
     const { login, user } = useAuth();
 
-    const [isLogin, setIsLogin] = useState(location.pathname !== '/register');
+    const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-
-    useEffect(() => {
-        setIsLogin(location.pathname !== '/register');
-        setError('');
-        setSuccessMessage('');
-    }, [location.pathname]);
 
     useEffect(() => {
         if (user) navigate('/dashboard');
@@ -40,7 +33,6 @@ const Landing = () => {
                 await api.post('/auth/register', formData);
                 setSuccessMessage('Registration successful! Please sign in.');
                 setIsLogin(true);
-                navigate('/login');
                 setFormData(prev => ({ ...prev, password: '' }));
             }
         } catch (err) {
@@ -228,6 +220,17 @@ const Landing = () => {
                                     className="text-primary hover:text-primary-light transition-colors underline underline-offset-8 decoration-primary/20"
                                 >
                                     Continue with google account
+                                </button>
+                            </p>
+
+                            <p className="mt-8 text-center text-xs text-text-muted/50">
+                                {isLogin ? "New here?" : "Already have an account?"}{' '}
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsLogin(!isLogin); setError(''); setSuccessMessage(''); }}
+                                    className="text-primary font-bold hover:text-primary-light transition-colors underline underline-offset-4 decoration-primary/30"
+                                >
+                                    {isLogin ? 'Create an account' : 'Sign in'}
                                 </button>
                             </p>
                         </motion.div>

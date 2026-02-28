@@ -12,7 +12,7 @@ const Navbar = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        navigate('/');
     };
 
     // Close dropdown when clicking outside
@@ -81,8 +81,8 @@ const Navbar = () => {
                         </div>
                     ) : (
                         <div className="flex items-center gap-10">
-                            <Link to="/login" className="text-sm font-bold text-text-muted hover:text-white transition-colors">Login</Link>
-                            <Link to="/register" className="btn-primary py-2.5 px-6 rounded-xl hover:scale-105 transition-all active:scale-95">
+                            <Link to="/" className="text-sm font-bold text-text-muted hover:text-white transition-colors">Login</Link>
+                            <Link to="/" className="btn-primary py-2.5 px-6 rounded-xl hover:scale-105 transition-all active:scale-95">
                                 Sign Up
                             </Link>
                         </div>

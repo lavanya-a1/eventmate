@@ -226,7 +226,7 @@ export default function TopNavbar({
 
                                 </nav>
                                 <div className="h-px bg-white/[0.06]" />
-                                <button onClick={() => { setShowProfileMenu(false); logout(); }}
+                                <button onClick={() => { setShowProfileMenu(false); logout(); navigate('/'); }}
                                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-red-400
                                                hover:bg-red-500/10 transition-colors text-sm font-medium">
                                     <LogOut size={14} /> Sign Out

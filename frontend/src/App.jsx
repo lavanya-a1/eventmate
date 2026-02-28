@@ -9,8 +9,6 @@ import Notifications from './pages/Notifications';
 import Feedback from './pages/Feedback';
 import Profile from './pages/Profile';
 import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Register from './pages/Register';
 
 // Admin
 import AdminLayout from './admin/components/layout/AdminLayout';
@@ -35,11 +33,11 @@ function PublicRoute({ children }) {
   return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
 }
 
-/** Redirect unauthenticated users to /login; redirect admins to /admin */
+/** Redirect unauthenticated users to /; redirect admins to /admin */
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/" replace />;
   if (user.role === 'admin') return <Navigate to="/admin" replace />;
   return children;
 }
@@ -48,7 +46,7 @@ function ProtectedRoute({ children }) {
 function AdminRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/" replace />;
   if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return children;
 }
@@ -66,8 +64,6 @@ function AppRoutes() {
     <Routes>
       {/* Public */}
       <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
       {/* Protected dashboard */}
       <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

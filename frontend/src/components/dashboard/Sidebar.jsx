@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
     Search,
@@ -27,6 +27,9 @@ const menuItems = [
 
 export default function Sidebar({ isOpen, setIsOpen }) {
     const { logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => { logout(); navigate('/'); };
 
     // Close sidebar on mobile when route changes
     useEffect(() => {
@@ -104,7 +107,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 {/* Sign Out Button */}
                 <div className="p-3 border-t border-theme-strong bg-white/[0.01]">
                     <button
-                        onClick={logout}
+                        onClick={handleLogout}
                         className={cn(
                             "w-full flex items-center gap-4 px-3 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all group relative font-bold text-sm",
                             !isOpen && "justify-center"
@@ -166,7 +169,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                     {/* Mobile Sign Out Button */}
                     <div className="p-3 border-t border-theme-strong bg-white/[0.01]">
                         <button
-                            onClick={logout}
+                            onClick={handleLogout}
                             className="w-full flex items-center gap-4 px-3 py-3 rounded-xl text-red-500 hover:bg-red-500/10 transition-all font-bold text-sm"
                         >
                             <LogOut size={22} className="shrink-0" />

@@ -52,7 +52,7 @@ const EventDetails = () => {
     };
 
     const handleBook = async () => {
-        if (!user) { navigate('/login'); return; }
+        if (!user) { navigate('/'); return; }
         setBooking(true);
         try {
             await api.post(`/events/${id}/book`, { seats });
