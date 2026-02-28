@@ -1,8 +1,6 @@
 const jwt = require("jsonwebtoken");
 
 const protect = (req, res, next) => {
-  console.log("AUTH HEADER:", req.headers.authorization);
-
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {

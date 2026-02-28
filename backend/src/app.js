@@ -12,7 +12,7 @@ const app = express();
 
 app.use(morgan("dev"));
 app.use(helmet());
-app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 
 app.use(
@@ -35,7 +35,7 @@ app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/events", require("./routes/event.routes"));
 app.use("/api/bookings", require("./routes/booking.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
-app.use("/api/user", require("./routes/user.routes"));
+app.use("/api/users", require("./routes/user.routes"));
 app.use("/api/notifications", require("./routes/notification.routes"));
 app.use("/api/feedback", require("./routes/feedback.routes"));
 app.use("/api/payments", require("./routes/payment.routes"));
