@@ -44,8 +44,8 @@ export const getPayments = (params) => api.get('/admin/payments', { params });
 export const getRevenueAnalytics = () => api.get('/admin/payments/analytics');
 
 // ─── QR / Tickets ─────────────────────────────────────────────────────────────
-export const validateQR = (ticketId) => api.post('/qr/validate', { ticketId });
-export const getAttendance = (eventId) => api.get(`/admin/events/${eventId}/attendance`);
+export const validateQR = (ticketId) => api.post('/admin/qr/validate', { ticketId });
+export const getAttendance = (eventId) => api.get(`/admin/qr/attendance/${eventId}`);
 
 // ─── Notifications ────────────────────────────────────────────────────────────
 export const getAdminNotifications = (params) => api.get('/admin/notifications', { params });
