@@ -48,23 +48,54 @@ exports.getAllEvents = asyncHandler(async (req, res) => {
     if (endDate) query.date.$lte = new Date(endDate);
   }
 
-  // 📊 Sorting
-  const sortOptions = {};
-  sortOptions[sortBy] = order === "desc" ? -1 : 1;
+  const now = new Date();
+
+  // Aggregation: upcoming events first (isPast=0), past events last (isPast=1)
+  // Within each group sort by date asc so soonest upcoming appears first
+  const pipeline = [
+    { $match: query },
+    {
+      $addFields: {
+        isPast: {
+          $cond: { if: { $lt: ["$date", now] }, then: 1, else: 0 }
+        }
+      }
+    },
+    { $sort: { isPast: 1, date: 1 } },
+    {
+      $addFields: {
+        availableSeats: { $subtract: ["$capacity", "$bookedSeats"] }
+      }
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "organizer",
+        foreignField: "_id",
+        as: "organizer",
+        pipeline: [{ $project: { name: 1, email: 1 } }]
+      }
+    },
+    {
+      $addFields: {
+        organizer: { $arrayElemAt: ["$organizer", 0] }
+      }
+    }
+  ];
 
   const total = await Event.countDocuments(query);
 
-  const events = await Event.find(query)
-    .populate("organizer", "name email")
-    .sort(sortOptions)
-    .skip((page - 1) * limit)
-    .limit(Number(limit));
+  const events = await Event.aggregate([
+    ...pipeline,
+    { $skip: (Number(page) - 1) * Number(limit) },
+    { $limit: Number(limit) },
+  ]);
 
   res.json({
     success: true,
     total,
     page: Number(page),
-    pages: Math.ceil(total / limit),
+    pages: Math.ceil(total / Number(limit)),
     results: events.length,
     data: events,
   });
