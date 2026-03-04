@@ -1,21 +1,22 @@
 const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
+const secrets = require('../config/secrets');
 
 // ─── Transporter ──────────────────────────────────────────────────────────────
-// Uses real SMTP when env vars provided; falls back to Ethereal test account.
+// Uses real SMTP when secrets are provided; falls back to Ethereal test account.
 let transporter;
 
 const getTransporter = async () => {
   if (transporter) return transporter;
 
-  if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+  if (secrets.smtp.host && secrets.smtp.user) {
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true',
+      host: secrets.smtp.host,
+      port: secrets.smtp.port,
+      secure: secrets.smtp.secure,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: secrets.smtp.user,
+        pass: secrets.smtp.pass,
       },
     });
   } else {
@@ -70,7 +71,7 @@ const emailService = {
     try {
       const t = await getTransporter();
       const info = await t.sendMail({
-        from: process.env.EMAIL_FROM || '"EventMate Admin" <admin@eventmate.io>',
+        from: secrets.emailFrom,
         to,
         subject,
         text: text || subject,
