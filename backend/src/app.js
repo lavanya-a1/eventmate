@@ -48,6 +48,7 @@ app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/events", require("./routes/event.routes"));
 app.use("/api/bookings", require("./routes/booking.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
+app.use("/api/organizer", require("./routes/organizer.routes"));
 app.use("/api/users", require("./routes/user.routes"));
 app.use("/api/notifications", require("./routes/notification.routes"));
 app.use("/api/feedback", require("./routes/feedback.routes"));

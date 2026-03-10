@@ -23,6 +23,13 @@ import FeedbackModeration from './admin/pages/FeedbackModeration';
 import SystemLogs from './admin/pages/SystemLogs';
 import Settings from './admin/pages/Settings';
 
+// Organizer
+import OrganizerLayout from './organizer/components/layout/OrganizerLayout';
+import OrganizerDashboard from './organizer/pages/OrganizerDashboard';
+import OrganizerMyEvents from './organizer/pages/OrganizerMyEvents';
+import OrganizerEventBookings from './organizer/pages/OrganizerEventBookings';
+import OrganizerSettings from './organizer/pages/OrganizerSettings';
+
 import './index.css';
 
 /** Redirect logged-in users away from auth pages */
@@ -30,15 +37,18 @@ function PublicRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return children;
-  return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+  if (user.role === 'admin') return <Navigate to="/admin" replace />;
+  if (user.role === 'organizer') return <Navigate to="/organizer" replace />;
+  return <Navigate to="/dashboard" replace />;
 }
 
-/** Redirect unauthenticated users to /; redirect admins to /admin */
+/** Redirect unauthenticated users to /; redirect admins and organizers to their panels */
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/" replace />;
   if (user.role === 'admin') return <Navigate to="/admin" replace />;
+  if (user.role === 'organizer') return <Navigate to="/organizer" replace />;
   return children;
 }
 
@@ -51,12 +61,23 @@ function AdminRoute({ children }) {
   return children;
 }
 
-/** Catch-all: send admins to /admin, users to /dashboard, guests to / */
+/** Organizer-only route */
+function OrganizerRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/" replace />;
+  if (user.role !== 'organizer') return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
+/** Catch-all: send admins to /admin, organizers to /organizer, users to /dashboard, guests to / */
 function DefaultRedirect() {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/" replace />;
-  return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+  if (user.role === 'admin') return <Navigate to="/admin" replace />;
+  if (user.role === 'organizer') return <Navigate to="/organizer" replace />;
+  return <Navigate to="/dashboard" replace />;
 }
 
 function AppRoutes() {
@@ -89,6 +110,14 @@ function AppRoutes() {
         <Route path="/admin/feedback" element={<FeedbackModeration />} />
         <Route path="/admin/logs" element={<SystemLogs />} />
         <Route path="/admin/settings" element={<Settings />} />
+      </Route>
+
+      {/* Organizer dashboard */}
+      <Route element={<OrganizerRoute><OrganizerLayout /></OrganizerRoute>}>
+        <Route path="/organizer" element={<OrganizerDashboard />} />
+        <Route path="/organizer/events" element={<OrganizerMyEvents />} />
+        <Route path="/organizer/bookings" element={<OrganizerEventBookings />} />
+        <Route path="/organizer/settings" element={<OrganizerSettings />} />
       </Route>
 
       <Route path="*" element={<DefaultRedirect />} />
