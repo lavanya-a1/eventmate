@@ -10,6 +10,10 @@ const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
+// Trust Render's reverse proxy so rate-limit, secure cookies, and
+// req.ip / req.protocol work correctly behind HTTPS termination.
+app.set("trust proxy", 1);
+
 app.use(morgan("dev"));
 app.use(helmet());
 app.use(cors({
@@ -18,7 +22,9 @@ app.use(cors({
     "https://eventmate-frontend.onrender.com"
   ],
   credentials: true
-}));app.use(express.json());
+}));
+
+app.use(express.json());
 
 app.use(
   rateLimit({
