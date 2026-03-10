@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         const res = await api.post('/auth/login', { email, password });
         localStorage.setItem('token', res.data.token);
+        localStorage.setItem('refreshToken', res.data.refreshToken);
         setUser(res.data.user);
         return res.data;
     };
@@ -36,8 +37,15 @@ export const AuthProvider = ({ children }) => {
         return res.data;
     };
 
-    const logout = () => {
+    const logout = async () => {
+        const refreshToken = localStorage.getItem('refreshToken');
+        try {
+            await api.post('/auth/logout', { refreshToken });
+        } catch {
+            // Ignore errors — we clear local state regardless
+        }
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         setUser(null);
     };
 

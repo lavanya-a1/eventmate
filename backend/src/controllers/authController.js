@@ -1,6 +1,32 @@
+const crypto = require("crypto");
 const User = require("../models/User");
+const RefreshToken = require("../models/RefreshToken");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+
+const ACCESS_TOKEN_EXPIRY = "15m";
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+
+function generateAccessToken(user) {
+  return jwt.sign(
+    { id: user._id, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: ACCESS_TOKEN_EXPIRY }
+  );
+}
+
+async function generateRefreshToken(userId) {
+  const raw = crypto.randomBytes(40).toString("hex");
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+
+  await RefreshToken.create({
+    user: userId,
+    token: raw,
+    expiresAt,
+  });
+
+  return raw;
+}
 
 exports.register = async (req, res, next) => {
   try {
@@ -38,16 +64,14 @@ exports.register = async (req, res, next) => {
       password: hashed,
     });
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const token = generateAccessToken(user);
+    const refreshToken = await generateRefreshToken(user._id);
 
     res.status(201).json({
       success: true,
       message: "Account created successfully",
       token,
+      refreshToken,
       user: {
         _id: user._id,
         name: user.name,
@@ -78,14 +102,12 @@ exports.login = asyncHandler(async (req, res) => {
   const match = await bcrypt.compare(password, user.password);
   if (!match) return res.status(400).json({ message: "Wrong password" });
 
-  const token = jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
+  const token = generateAccessToken(user);
+  const refreshToken = await generateRefreshToken(user._id);
 
   res.json({
     token,
+    refreshToken,
     user: {
       _id: user._id,
       name: user.name,
@@ -167,4 +189,54 @@ exports.updateDetails = asyncHandler(async (req, res) => {
   });
 });
 
+exports.refreshToken = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
 
+  if (!refreshToken) {
+    return res.status(400).json({ message: "Refresh token is required" });
+  }
+
+  const stored = await RefreshToken.findOne({ token: refreshToken });
+
+  if (!stored) {
+    return res.status(401).json({ message: "Invalid refresh token" });
+  }
+
+  if (stored.expiresAt < new Date()) {
+    await RefreshToken.deleteOne({ _id: stored._id });
+    return res.status(401).json({ message: "Refresh token expired" });
+  }
+
+  const user = await User.findById(stored.user);
+  if (!user) {
+    await RefreshToken.deleteOne({ _id: stored._id });
+    return res.status(401).json({ message: "User not found" });
+  }
+
+  // Rotate: delete old, issue new pair
+  await RefreshToken.deleteOne({ _id: stored._id });
+
+  const newAccessToken = generateAccessToken(user);
+  const newRefreshToken = await generateRefreshToken(user._id);
+
+  res.json({
+    token: newAccessToken,
+    refreshToken: newRefreshToken,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+});
+
+exports.logout = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (refreshToken) {
+    await RefreshToken.deleteOne({ token: refreshToken });
+  }
+
+  res.json({ success: true, message: "Logged out successfully" });
+});

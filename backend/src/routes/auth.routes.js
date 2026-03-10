@@ -7,6 +7,8 @@ const router = express.Router();
 
 router.post("/register", authController.register);
 router.post("/login", authController.login);
+router.post("/refresh-token", authController.refreshToken);
+router.post("/logout", authController.logout);
 
 // @route   GET /api/auth/me
 // @desc    Get current user profile
