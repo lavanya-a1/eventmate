@@ -240,3 +240,27 @@ exports.logout = asyncHandler(async (req, res) => {
 
   res.json({ success: true, message: "Logged out successfully" });
 });
+
+exports.googleCallback = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const secrets = require("../config/secrets");
+
+  if (!user) {
+    return res.redirect(`${secrets.clientUrl}/?error=google_auth_failed`);
+  }
+
+  if (user.isBlocked) {
+    return res.redirect(`${secrets.clientUrl}/?error=account_blocked`);
+  }
+
+  const token = generateAccessToken(user);
+  const refreshToken = await generateRefreshToken(user._id);
+
+  // Redirect to frontend with tokens as query params
+  const params = new URLSearchParams({
+    token,
+    refreshToken,
+  });
+
+  res.redirect(`${secrets.clientUrl}/?oauth=${params.toString()}`);
+});

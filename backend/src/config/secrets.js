@@ -54,6 +54,13 @@ const secrets = {
     fallback: '"EventMate Admin" <admin@eventmate.io>',
   }),
 
+  // Google OAuth
+  google: {
+    clientId: get('GOOGLE_CLIENT_ID'),
+    clientSecret: get('GOOGLE_CLIENT_SECRET'),
+    callbackUrl: get('GOOGLE_CALLBACK_URL', { fallback: '/api/auth/google/callback' }),
+  },
+
   // CORS
   clientUrl: get('CLIENT_URL', { fallback: 'http://localhost:5173' }),
 

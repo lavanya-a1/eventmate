@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, User, Sparkles, CheckCircle2, Chrome } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 
 const Landing = () => {
     const navigate = useNavigate();
-    const { login, user } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { login, loginWithTokens, user } = useAuth();
 
     const [isLogin, setIsLogin] = useState(true);
     const [loading, setLoading] = useState(false);
@@ -16,8 +17,34 @@ const Landing = () => {
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
 
     useEffect(() => {
-        if (user) navigate('/dashboard');
-    }, [user, navigate]);
+        if (user) {
+            navigate('/dashboard');
+            return;
+        }
+
+        // Handle Google OAuth callback
+        const oauthData = searchParams.get('oauth');
+        const oauthError = searchParams.get('error');
+
+        if (oauthError) {
+            setError(oauthError === 'account_blocked' ? 'Your account has been blocked.' : 'Google authentication failed. Please try again.');
+            setSearchParams({}, { replace: true });
+            return;
+        }
+
+        if (oauthData) {
+            const params = new URLSearchParams(oauthData);
+            const token = params.get('token');
+            const refreshToken = params.get('refreshToken');
+
+            if (token && refreshToken) {
+                setSearchParams({}, { replace: true });
+                loginWithTokens(token, refreshToken)
+                    .then(() => navigate('/dashboard'))
+                    .catch(() => setError('Failed to complete Google sign-in.'));
+            }
+        }
+    }, [user, navigate, searchParams, setSearchParams, loginWithTokens]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

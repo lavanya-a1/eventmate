@@ -1,5 +1,6 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
+const passport = require("passport");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
 const authController = require("../controllers/authController");
@@ -41,5 +42,17 @@ router.get("/me", auth, async (req, res) => {
 router.put("/profile", auth, authController.updateProfile);
 router.put("/password", auth, authController.updatePassword);
 router.put("/updatedetails", auth, authController.updateDetails);
+
+// ─── Google OAuth ──────────────────────────────────────────────────────────────
+router.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"], session: false })
+);
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: "/?error=google_auth_failed" }),
+  authController.googleCallback
+);
 
 module.exports = router;
