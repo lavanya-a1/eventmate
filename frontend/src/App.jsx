@@ -8,6 +8,7 @@ import QRTickets from './pages/QRTickets';
 import Notifications from './pages/Notifications';
 import Feedback from './pages/Feedback';
 import Profile from './pages/Profile';
+import VerifyEmail from './pages/VerifyEmail';
 import Landing from './pages/Landing';
 
 // Admin
@@ -85,6 +86,7 @@ function AppRoutes() {
     <Routes>
       {/* Public */}
       <Route path="/" element={<Landing />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
 
       {/* Protected dashboard */}
       <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

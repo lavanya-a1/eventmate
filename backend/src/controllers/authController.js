@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const asyncHandler = require("../utils/asyncHandler");
 const { setCsrfCookie, clearCsrfCookie } = require("../middleware/csrf");
+const emailService = require("../services/emailService");
+const secrets = require("../config/secrets");
 
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
@@ -63,29 +65,74 @@ exports.register = asyncHandler(async (req, res) => {
 
   const hashed = await bcrypt.hash(password, 10);
 
+  // Generate email verification token
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+  const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
   const user = await User.create({
     name,
     email,
     password: hashed,
+    emailVerificationToken: verificationToken,
+    emailVerificationExpires: verificationExpires,
   });
 
-  const token = generateAccessToken(user);
-  const refreshToken = await generateRefreshToken(user._id);
-
-  setAuthCookies(res, refreshToken);
+  // Send verification email (fire-and-forget — don't block registration)
+  const verificationUrl = `${secrets.clientUrl}/verify-email?token=${verificationToken}`;
+  emailService.sendVerificationEmail({ to: email, name, verificationUrl }).catch(() => {});
 
   res.status(201).json({
     success: true,
-    message: "Account created successfully",
-    token,
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    message: "Account created! Please check your email to verify your account.",
   });
 });
+
+exports.verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+
+  const user = await User.findOne({
+    emailVerificationToken: token,
+    emailVerificationExpires: { $gt: new Date() },
+  });
+
+  if (!user) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid or expired verification link.",
+    });
+  }
+
+  user.isEmailVerified = true;
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpires = undefined;
+  await user.save();
+
+  res.json({ success: true, message: "Email verified successfully. You can now sign in." });
+});
+
+exports.resendVerification = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  // Always return success to prevent email enumeration
+  if (!user || user.isEmailVerified || user.provider !== "local") {
+    return res.json({ success: true, message: "If that email exists and is unverified, a new link has been sent." });
+  }
+
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+  user.emailVerificationToken = verificationToken;
+  user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await user.save();
+
+  const verificationUrl = `${secrets.clientUrl}/verify-email?token=${verificationToken}`;
+  emailService.sendVerificationEmail({ to: email, name: user.name, verificationUrl }).catch(() => {});
+
+  res.json({ success: true, message: "If that email exists and is unverified, a new link has been sent." });
+});
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_DURATION_MINUTES = 15;
 
 exports.login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -93,8 +140,53 @@ exports.login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) return res.status(400).json({ message: "User not found" });
 
+  // Check email verification (skip for non-local providers)
+  if (user.provider === "local" && !user.isEmailVerified) {
+    return res.status(403).json({
+      message: "Please verify your email before signing in. Check your inbox for the verification link.",
+      needsVerification: true,
+    });
+  }
+
+  // Check if account is locked
+  if (user.lockUntil && user.lockUntil > new Date()) {
+    const minutesLeft = Math.ceil((user.lockUntil - Date.now()) / 60000);
+    return res.status(423).json({
+      message: `Account locked due to too many failed attempts. Try again in ${minutesLeft} minute(s).`,
+    });
+  }
+
+  // If lock has expired, reset
+  if (user.lockUntil && user.lockUntil <= new Date()) {
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+  }
+
   const match = await bcrypt.compare(password, user.password);
-  if (!match) return res.status(400).json({ message: "Wrong password" });
+  if (!match) {
+    user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+
+    if (user.failedLoginAttempts >= MAX_LOGIN_ATTEMPTS) {
+      user.lockUntil = new Date(Date.now() + LOCK_DURATION_MINUTES * 60 * 1000);
+      await user.save();
+      return res.status(423).json({
+        message: `Account locked after ${MAX_LOGIN_ATTEMPTS} failed attempts. Try again in ${LOCK_DURATION_MINUTES} minutes.`,
+      });
+    }
+
+    await user.save();
+    const remaining = MAX_LOGIN_ATTEMPTS - user.failedLoginAttempts;
+    return res.status(400).json({
+      message: `Wrong password. ${remaining} attempt(s) remaining before lockout.`,
+    });
+  }
+
+  // Successful login — reset counters
+  if (user.failedLoginAttempts > 0 || user.lockUntil) {
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+  }
 
   const token = generateAccessToken(user);
   const refreshToken = await generateRefreshToken(user._id);

@@ -30,10 +30,24 @@ const userSchema = new mongoose.Schema({
     enum: ["admin", "organizer", "attendee", "user"],
     default: "user"
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  emailVerificationToken: String,
+  emailVerificationExpires: Date,
   isBlocked: {
     type: Boolean,
     default: false,
     index: true,
+  },
+  failedLoginAttempts: {
+    type: Number,
+    default: 0,
+  },
+  lockUntil: {
+    type: Date,
+    default: null,
   },
   phone: String,
   bio: String,

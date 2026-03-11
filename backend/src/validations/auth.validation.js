@@ -16,6 +16,11 @@ exports.login = Joi.object({
     .messages({ 'any.required': 'Password is required' }),
 });
 
+exports.resendVerification = Joi.object({
+  email: Joi.string().trim().lowercase().email().required()
+    .messages({ 'string.email': 'Please provide a valid email', 'any.required': 'Email is required' }),
+});
+
 exports.refreshToken = Joi.object({
   refreshToken: Joi.string().required()
     .messages({ 'any.required': 'Refresh token is required' }),

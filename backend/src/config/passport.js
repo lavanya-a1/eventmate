@@ -54,6 +54,7 @@ if (secrets.google.clientId && secrets.google.clientSecret) {
             email,
             googleId: profile.id,
             provider: 'google',
+            isEmailVerified: true,
             avatar: profile.photos?.[0]?.value || undefined,
           });
 

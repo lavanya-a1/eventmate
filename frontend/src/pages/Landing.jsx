@@ -14,6 +14,8 @@ const Landing = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [needsVerification, setNeedsVerification] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
 
     useEffect(() => {
@@ -46,21 +48,42 @@ const Landing = () => {
         setLoading(true);
         setError('');
         setSuccessMessage('');
+        setNeedsVerification(false);
 
         try {
             if (isLogin) {
                 await login(formData.email, formData.password);
                 navigate('/dashboard');
             } else {
-                await api.post('/auth/register', formData);
-                setSuccessMessage('Registration successful! Please sign in.');
+                const res = await api.post('/auth/register', formData);
+                setSuccessMessage(res.data.message || 'Account created! Please check your email to verify your account.');
                 setIsLogin(true);
                 setFormData(prev => ({ ...prev, password: '' }));
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Authentication failed.');
+            const data = err.response?.data;
+            if (data?.needsVerification) {
+                setNeedsVerification(true);
+                setError(data.message);
+            } else {
+                setError(data?.message || 'Authentication failed.');
+            }
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleResendVerification = async () => {
+        setResendLoading(true);
+        try {
+            const res = await api.post('/auth/resend-verification', { email: formData.email });
+            setSuccessMessage(res.data.message);
+            setError('');
+            setNeedsVerification(false);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to resend verification email.');
+        } finally {
+            setResendLoading(false);
         }
     };
 
@@ -142,10 +165,22 @@ const Landing = () => {
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
-                                    className="mb-6 text-error text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4"
+                                    className="mb-6"
                                 >
-                                    <span className="w-8 h-px bg-error/40" />
-                                    {error}
+                                    <div className="text-error text-xs font-black uppercase tracking-[0.2em] flex items-center gap-4">
+                                        <span className="w-8 h-px bg-error/40" />
+                                        {error}
+                                    </div>
+                                    {needsVerification && (
+                                        <button
+                                            type="button"
+                                            onClick={handleResendVerification}
+                                            disabled={resendLoading}
+                                            className="mt-3 text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:text-primary-light transition-colors underline underline-offset-4 decoration-primary/30"
+                                        >
+                                            {resendLoading ? 'Sending…' : 'Resend verification email'}
+                                        </button>
+                                    )}
                                 </motion.div>
                             )}
 
@@ -249,7 +284,7 @@ const Landing = () => {
                                 {isLogin ? "New here?" : "Already have an account?"}{' '}
                                 <button
                                     type="button"
-                                    onClick={() => { setIsLogin(!isLogin); setError(''); setSuccessMessage(''); }}
+                                    onClick={() => { setIsLogin(!isLogin); setError(''); setSuccessMessage(''); setNeedsVerification(false); }}
                                     className="text-primary font-bold hover:text-primary-light transition-colors underline underline-offset-4 decoration-primary/30"
                                 >
                                     {isLogin ? 'Create an account' : 'Sign in'}

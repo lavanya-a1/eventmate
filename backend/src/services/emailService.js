@@ -90,6 +90,22 @@ const emailService = {
   },
 
   /**
+   * Email verification link.
+   */
+  async sendVerificationEmail({ to, name, verificationUrl }) {
+    const html = baseTemplate(`
+      <div class="body">
+        <h2>Verify Your Email</h2>
+        <p>Hi ${name || 'there'}, thanks for signing up! Please verify your email address to get started.</p>
+        <p style="text-align:center;margin:24px 0">
+          <a href="${verificationUrl}" class="btn">Verify Email</a>
+        </p>
+        <p style="font-size:12px;color:#64748b">This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
+      </div>`);
+    return this.sendMail({ to, subject: 'Verify your EventMate email', html });
+  },
+
+  /**
    * Event reminder email.
    */
   async sendReminder({ to, name, eventTitle, eventDate, eventVenue }) {
