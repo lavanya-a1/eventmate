@@ -27,14 +27,14 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         const res = await api.post('/auth/login', { email, password });
         localStorage.setItem('token', res.data.token);
-        localStorage.setItem('refreshToken', res.data.refreshToken);
+        // refresh token is now stored in httpOnly cookie by the server
         setUser(res.data.user);
         return res.data;
     };
 
-    const loginWithTokens = async (token, refreshToken) => {
+    const loginWithTokens = async (token) => {
         localStorage.setItem('token', token);
-        localStorage.setItem('refreshToken', refreshToken);
+        // refresh token is already in httpOnly cookie from the OAuth redirect
         const res = await api.get('/auth/me');
         setUser(res.data.data);
     };
@@ -45,14 +45,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = async () => {
-        const refreshToken = localStorage.getItem('refreshToken');
         try {
-            await api.post('/auth/logout', { refreshToken });
+            await api.post('/auth/logout');
         } catch {
             // Ignore errors — we clear local state regardless
         }
         localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
         setUser(null);
     };
 

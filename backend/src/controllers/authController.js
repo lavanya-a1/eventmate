@@ -4,6 +4,7 @@ const RefreshToken = require("../models/RefreshToken");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const asyncHandler = require("../utils/asyncHandler");
+const { setCsrfCookie, clearCsrfCookie } = require("../middleware/csrf");
 
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
@@ -29,6 +30,25 @@ async function generateRefreshToken(userId) {
   return raw;
 }
 
+/**
+ * Set the refresh token as an httpOnly cookie + CSRF cookie.
+ */
+function setAuthCookies(res, refreshToken) {
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax',
+    maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+    path: '/',
+  });
+  setCsrfCookie(res);
+}
+
+function clearAuthCookies(res) {
+  res.clearCookie('refreshToken', { path: '/' });
+  clearCsrfCookie(res);
+}
+
 exports.register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -52,11 +72,12 @@ exports.register = asyncHandler(async (req, res) => {
   const token = generateAccessToken(user);
   const refreshToken = await generateRefreshToken(user._id);
 
+  setAuthCookies(res, refreshToken);
+
   res.status(201).json({
     success: true,
     message: "Account created successfully",
     token,
-    refreshToken,
     user: {
       _id: user._id,
       name: user.name,
@@ -78,9 +99,10 @@ exports.login = asyncHandler(async (req, res) => {
   const token = generateAccessToken(user);
   const refreshToken = await generateRefreshToken(user._id);
 
+  setAuthCookies(res, refreshToken);
+
   res.json({
     token,
-    refreshToken,
     user: {
       _id: user._id,
       name: user.name,
@@ -163,7 +185,8 @@ exports.updateDetails = asyncHandler(async (req, res) => {
 });
 
 exports.refreshToken = asyncHandler(async (req, res) => {
-  const { refreshToken } = req.body;
+  // Read refresh token from httpOnly cookie (fallback to body for backward compat)
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!refreshToken) {
     return res.status(400).json({ message: "Refresh token is required" });
@@ -192,9 +215,10 @@ exports.refreshToken = asyncHandler(async (req, res) => {
   const newAccessToken = generateAccessToken(user);
   const newRefreshToken = await generateRefreshToken(user._id);
 
+  setAuthCookies(res, newRefreshToken);
+
   res.json({
     token: newAccessToken,
-    refreshToken: newRefreshToken,
     user: {
       _id: user._id,
       name: user.name,
@@ -205,11 +229,13 @@ exports.refreshToken = asyncHandler(async (req, res) => {
 });
 
 exports.logout = asyncHandler(async (req, res) => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (refreshToken) {
     await RefreshToken.deleteOne({ token: refreshToken });
   }
+
+  clearAuthCookies(res);
 
   res.json({ success: true, message: "Logged out successfully" });
 });
@@ -229,11 +255,8 @@ exports.googleCallback = asyncHandler(async (req, res) => {
   const token = generateAccessToken(user);
   const refreshToken = await generateRefreshToken(user._id);
 
-  // Redirect to frontend with tokens as query params
-  const params = new URLSearchParams({
-    token,
-    refreshToken,
-  });
+  setAuthCookies(res, refreshToken);
 
-  res.redirect(`${secrets.clientUrl}/?oauth=${params.toString()}`);
+  // Pass only the access token via URL (refresh token is in httpOnly cookie)
+  res.redirect(`${secrets.clientUrl}/?oauth_token=${encodeURIComponent(token)}`);
 });

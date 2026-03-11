@@ -23,7 +23,7 @@ const Landing = () => {
         }
 
         // Handle Google OAuth callback
-        const oauthData = searchParams.get('oauth');
+        const oauthToken = searchParams.get('oauth_token');
         const oauthError = searchParams.get('error');
 
         if (oauthError) {
@@ -32,17 +32,12 @@ const Landing = () => {
             return;
         }
 
-        if (oauthData) {
-            const params = new URLSearchParams(oauthData);
-            const token = params.get('token');
-            const refreshToken = params.get('refreshToken');
-
-            if (token && refreshToken) {
-                setSearchParams({}, { replace: true });
-                loginWithTokens(token, refreshToken)
-                    .then(() => navigate('/dashboard'))
-                    .catch(() => setError('Failed to complete Google sign-in.'));
-            }
+        if (oauthToken) {
+            setSearchParams({}, { replace: true });
+            // Refresh token is already in httpOnly cookie from the redirect
+            loginWithTokens(oauthToken)
+                .then(() => navigate('/dashboard'))
+                .catch(() => setError('Failed to complete Google sign-in.'));
         }
     }, [user, navigate, searchParams, setSearchParams, loginWithTokens]);
 

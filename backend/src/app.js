@@ -5,7 +5,9 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
+const cookieParser = require("cookie-parser");
 const passport = require("./config/passport");
+const { verifyCsrf } = require("./middleware/csrf");
 
 const errorHandler = require("./middleware/errorHandler");
 
@@ -26,7 +28,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(passport.initialize());
+app.use(verifyCsrf);
 
 app.use(
   rateLimit({

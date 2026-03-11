@@ -4,6 +4,7 @@ const passport = require("passport");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
 const validate = require("../middleware/validate");
+const { setCsrfCookie } = require("../middleware/csrf");
 const authSchemas = require("../validations/auth.validation");
 const authController = require("../controllers/authController");
 
@@ -44,6 +45,12 @@ router.get("/me", auth, async (req, res) => {
 router.put("/profile", auth, validate(authSchemas.updateProfile), authController.updateProfile);
 router.put("/password", auth, validate(authSchemas.updatePassword), authController.updatePassword);
 router.put("/updatedetails", auth, validate(authSchemas.updateDetails), authController.updateDetails);
+
+// ─── CSRF Token ────────────────────────────────────────────────────────────────
+router.get("/csrf-token", (req, res) => {
+  const token = setCsrfCookie(res);
+  res.json({ success: true, csrfToken: token });
+});
 
 // ─── Google OAuth ──────────────────────────────────────────────────────────────
 router.get(

@@ -5,15 +5,33 @@ const instance = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    withCredentials: true, // send cookies (httpOnly refresh token + CSRF cookie)
 });
 
-// Add a request interceptor to include auth token
+/**
+ * Read a cookie value by name (for the non-httpOnly CSRF cookie).
+ */
+function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : null;
+}
+
+// Add a request interceptor to include auth token + CSRF header
 instance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        // Attach CSRF token for state-changing requests
+        if (['post', 'put', 'patch', 'delete'].includes(config.method)) {
+            const csrfToken = getCookie('csrf_token');
+            if (csrfToken) {
+                config.headers['X-CSRF-Token'] = csrfToken;
+            }
+        }
+
         return config;
     },
     (error) => {
@@ -60,23 +78,15 @@ instance.interceptors.response.use(
             originalRequest._retry = true;
             isRefreshing = true;
 
-            const refreshToken = localStorage.getItem('refreshToken');
-            if (!refreshToken) {
-                isRefreshing = false;
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
-                window.location.href = '/';
-                return Promise.reject(error);
-            }
-
             try {
+                // Refresh token is sent automatically via httpOnly cookie
                 const { data } = await axios.post(
                     `${instance.defaults.baseURL}/auth/refresh-token`,
-                    { refreshToken }
+                    {},
+                    { withCredentials: true }
                 );
 
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('refreshToken', data.refreshToken);
 
                 instance.defaults.headers.common.Authorization = `Bearer ${data.token}`;
                 originalRequest.headers.Authorization = `Bearer ${data.token}`;
@@ -86,7 +96,6 @@ instance.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError, null);
                 localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
                 window.location.href = '/';
                 return Promise.reject(refreshError);
             } finally {
