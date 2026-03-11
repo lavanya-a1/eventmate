@@ -3,6 +3,7 @@ const User = require("../models/User");
 const RefreshToken = require("../models/RefreshToken");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const asyncHandler = require("../utils/asyncHandler");
 
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
@@ -28,73 +29,45 @@ async function generateRefreshToken(userId) {
   return raw;
 }
 
-exports.register = async (req, res, next) => {
-  try {
-    const { name, email, password } = req.body;
+exports.register = asyncHandler(async (req, res) => {
+  const { name, email, password } = req.body;
 
-    // Validate required fields
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Name, email and password are required",
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: "Password must be at least 6 characters",
-      });
-    }
-
-    // Check duplicate email with a friendly message
-    const existing = await User.findOne({ email: email.toLowerCase().trim() });
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "An account with this email already exists",
-      });
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      password: hashed,
+  // Check duplicate email
+  const existing = await User.findOne({ email });
+  if (existing) {
+    return res.status(400).json({
+      success: false,
+      message: "An account with this email already exists",
     });
-
-    const token = generateAccessToken(user);
-    const refreshToken = await generateRefreshToken(user._id);
-
-    res.status(201).json({
-      success: true,
-      message: "Account created successfully",
-      token,
-      refreshToken,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (err) {
-    // Mongo duplicate key fallback
-    if (err.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: "An account with this email already exists",
-      });
-    }
-    next(err);
   }
-};
-const asyncHandler = require("../utils/asyncHandler");
+
+  const hashed = await bcrypt.hash(password, 10);
+
+  const user = await User.create({
+    name,
+    email,
+    password: hashed,
+  });
+
+  const token = generateAccessToken(user);
+  const refreshToken = await generateRefreshToken(user._id);
+
+  res.status(201).json({
+    success: true,
+    message: "Account created successfully",
+    token,
+    refreshToken,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
+});
 
 exports.login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  console.log('Login attempt for:', email);
 
   const user = await User.findOne({ email });
   if (!user) return res.status(400).json({ message: "User not found" });

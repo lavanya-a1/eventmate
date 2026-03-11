@@ -3,6 +3,8 @@ const rateLimit = require("express-rate-limit");
 const passport = require("passport");
 const User = require("../models/User");
 const auth = require("../middleware/auth");
+const validate = require("../middleware/validate");
+const authSchemas = require("../validations/auth.validation");
 const authController = require("../controllers/authController");
 
 const router = express.Router();
@@ -19,9 +21,9 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-router.post("/register", authLimiter, authController.register);
-router.post("/login", authLimiter, authController.login);
-router.post("/refresh-token", authController.refreshToken);
+router.post("/register", authLimiter, validate(authSchemas.register), authController.register);
+router.post("/login", authLimiter, validate(authSchemas.login), authController.login);
+router.post("/refresh-token", validate(authSchemas.refreshToken), authController.refreshToken);
 router.post("/logout", authController.logout);
 
 // @route   GET /api/auth/me
@@ -39,9 +41,9 @@ router.get("/me", auth, async (req, res) => {
   }
 });
 
-router.put("/profile", auth, authController.updateProfile);
-router.put("/password", auth, authController.updatePassword);
-router.put("/updatedetails", auth, authController.updateDetails);
+router.put("/profile", auth, validate(authSchemas.updateProfile), authController.updateProfile);
+router.put("/password", auth, validate(authSchemas.updatePassword), authController.updatePassword);
+router.put("/updatedetails", auth, validate(authSchemas.updateDetails), authController.updateDetails);
 
 // ─── Google OAuth ──────────────────────────────────────────────────────────────
 router.get(

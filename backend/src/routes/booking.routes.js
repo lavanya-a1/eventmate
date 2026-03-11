@@ -1,5 +1,7 @@
 const express = require("express");
 const auth = require("../middleware/auth");
+const validate = require("../middleware/validate");
+const bookingSchemas = require("../validations/booking.validation");
 const bookingController = require("../controllers/bookingController");
 
 const router = express.Router();
@@ -8,7 +10,7 @@ const router = express.Router();
 router.use(auth);
 
 // Create booking (body: { eventId })
-router.post("/", bookingController.createBooking);
+router.post("/", validate(bookingSchemas.createBooking), bookingController.createBooking);
 
 // List current user's bookings
 router.get("/me", bookingController.getMyBookings);

@@ -1,6 +1,8 @@
 const express = require("express");
 const auth = require("../middleware/auth");
 const role = require("../middleware/role");
+const validate = require("../middleware/validate");
+const { createEventSchema, updateEventSchema, listEventsQuery } = require("../validations/event.validation");
 const eventController = require("../controllers/eventController");
 const bookingController = require("../controllers/bookingController");
 const { upload } = require("../config/cloudinary");
@@ -12,14 +14,14 @@ const router = express.Router();
  * @desc    Create an event
  * @access  Protected (Organizer or Admin)
  */
-router.post("/", auth, role(["organizer", "admin"]), upload.single('image'), eventController.createEvent);
+router.post("/", auth, role(["organizer", "admin"]), upload.single('image'), validate(createEventSchema), eventController.createEvent);
 
 /**
  * @route   GET /api/events
  * @desc    Get all events with pagination, search, and filters
  * @access  Public
  */
-router.get("/", eventController.getAllEvents);
+router.get("/", validate(listEventsQuery, 'query'), eventController.getAllEvents);
 
 /**
  * @route   GET /api/events/:id
@@ -33,7 +35,7 @@ router.get("/:id", eventController.getEventById);
  * @desc    Update an event
  * @access  Protected (Owner or Admin)
  */
-router.put("/:id", auth, eventController.updateEvent);
+router.put("/:id", auth, validate(updateEventSchema), eventController.updateEvent);
 
 /**
  * @route   DELETE /api/events/:id
