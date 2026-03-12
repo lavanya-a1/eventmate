@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import AdminSidebar from './AdminSidebar';
 import AdminTopNavbar from './AdminTopNavbar';
 import ToastContainer from '../ui/Toast';
-import { ThemeProvider, useTheme } from '../../context/AdminThemeContext';
+import { useTheme } from '../../context/AdminThemeContext';
 
 function AdminLayoutInner() {
   const [collapsed, setCollapsed] = useState(false);
@@ -52,9 +52,5 @@ function AdminLayoutInner() {
 }
 
 export default function AdminLayout() {
-  return (
-    <ThemeProvider>
-      <AdminLayoutInner />
-    </ThemeProvider>
-  );
+  return <AdminLayoutInner />;
 }

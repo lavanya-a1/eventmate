@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 import OrganizerSidebar from './OrganizerSidebar';
 import OrganizerTopNavbar from './OrganizerTopNavbar';
 import ToastContainer from '../../../admin/components/ui/Toast';
-import { ThemeProvider } from '../../../admin/context/AdminThemeContext';
+// Theme is provided globally by App.jsx
 
 function OrganizerLayoutInner() {
   const [collapsed, setCollapsed] = useState(false);
@@ -50,9 +50,5 @@ function OrganizerLayoutInner() {
 }
 
 export default function OrganizerLayout() {
-  return (
-    <ThemeProvider>
-      <OrganizerLayoutInner />
-    </ThemeProvider>
-  );
+  return <OrganizerLayoutInner />;
 }

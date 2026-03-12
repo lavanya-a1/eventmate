@@ -1,27 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import TopNavbar from './TopNavbar';
+import { useTheme } from '../../admin/context/AdminThemeContext';
 
 export default function DashboardLayout() {
     const location = useLocation();
 
+    const { theme, toggleTheme } = useTheme();
+    const isDarkMode = theme === 'dark';
+    const setIsDarkMode = useCallback((val) => {
+        const next = typeof val === 'function' ? val(isDarkMode) : val;
+        if (next !== isDarkMode) toggleTheme();
+    }, [isDarkMode, toggleTheme]);
+
     const [showSearchModal, setShowSearchModal] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
-    const [isDarkMode, setIsDarkMode] = useState(() => {
-        // Restore from localStorage; default to dark
-        return localStorage.getItem('theme') !== 'light';
-    });
-
-    // Apply theme class to <html> whenever isDarkMode changes
-    useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.remove('light');
-        } else {
-            document.documentElement.classList.add('light');
-        }
-        localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-    }, [isDarkMode]);
 
     // Close modals on Escape
     useEffect(() => {
