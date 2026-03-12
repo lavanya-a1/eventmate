@@ -276,6 +276,50 @@ exports.updateDetails = asyncHandler(async (req, res) => {
   });
 });
 
+exports.forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+
+  // Always return success to prevent email enumeration
+  if (!user || user.provider !== "local") {
+    return res.json({ success: true, message: "If that email is registered, a password reset link has been sent." });
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  user.passwordResetToken = resetToken;
+  user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+  await user.save();
+
+  const resetUrl = `${secrets.clientUrl}/reset-password?token=${resetToken}`;
+  emailService.sendPasswordResetEmail({ to: email, name: user.name, resetUrl }).catch(() => {});
+
+  res.json({ success: true, message: "If that email is registered, a password reset link has been sent." });
+});
+
+exports.resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  const user = await User.findOne({
+    passwordResetToken: token,
+    passwordResetExpires: { $gt: new Date() },
+  });
+
+  if (!user) {
+    return res.status(400).json({ success: false, message: "Invalid or expired reset link." });
+  }
+
+  user.password = await bcrypt.hash(password, 10);
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  // Also unlock account if it was locked
+  user.failedLoginAttempts = 0;
+  user.lockUntil = null;
+  await user.save();
+
+  res.json({ success: true, message: "Password reset successfully. You can now sign in." });
+});
+
 exports.refreshToken = asyncHandler(async (req, res) => {
   // Read refresh token from httpOnly cookie (fallback to body for backward compat)
   const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;

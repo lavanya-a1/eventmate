@@ -21,6 +21,16 @@ exports.resendVerification = Joi.object({
     .messages({ 'string.email': 'Please provide a valid email', 'any.required': 'Email is required' }),
 });
 
+exports.forgotPassword = Joi.object({
+  email: Joi.string().trim().lowercase().email().required()
+    .messages({ 'string.email': 'Please provide a valid email', 'any.required': 'Email is required' }),
+});
+
+exports.resetPassword = Joi.object({
+  password: Joi.string().min(6).max(128).required()
+    .messages({ 'string.min': 'Password must be at least 6 characters', 'any.required': 'Password is required' }),
+});
+
 exports.refreshToken = Joi.object({
   refreshToken: Joi.string().required()
     .messages({ 'any.required': 'Refresh token is required' }),

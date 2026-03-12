@@ -90,6 +90,22 @@ const emailService = {
   },
 
   /**
+   * Password reset link.
+   */
+  async sendPasswordResetEmail({ to, name, resetUrl }) {
+    const html = baseTemplate(`
+      <div class="body">
+        <h2>Reset Your Password</h2>
+        <p>Hi ${name || 'there'}, we received a request to reset your password.</p>
+        <p style="text-align:center;margin:24px 0">
+          <a href="${resetUrl}" class="btn">Reset Password</a>
+        </p>
+        <p style="font-size:12px;color:#64748b">This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
+      </div>`);
+    return this.sendMail({ to, subject: 'Reset your EventMate password', html });
+  },
+
+  /**
    * Email verification link.
    */
   async sendVerificationEmail({ to, name, verificationUrl }) {
