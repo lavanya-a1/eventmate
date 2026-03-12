@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Pencil, Trash2, Calendar, MapPin, Upload, X, ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Calendar, MapPin, Upload, X, ImageIcon, Filter, RotateCcw, Eye } from 'lucide-react';
 import DataTable from '../../admin/components/ui/DataTable';
 import Badge from '../../admin/components/ui/Badge';
 import Modal from '../../admin/components/ui/Modal';
@@ -8,6 +8,7 @@ import { toast } from '../../admin/components/ui/Toast';
 import {
   getOrganizerEvents, createEvent, updateEvent, deleteEvent,
 } from '../api/organizerApi';
+import { useNavigate } from 'react-router-dom';
 
 const CATEGORIES = ['Music', 'Technology', 'Sports', 'Art', 'Business', 'Food & Drink', 'Education', 'Networking'];
 
@@ -151,12 +152,24 @@ function EventForm({ initial, onSave, onClose }) {
 }
 
 export default function OrganizerMyEvents() {
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+
+  const hasActiveFilters = filterCategory !== 'all' || filterDateFrom || filterDateTo;
+
+  const clearFilters = () => {
+    setFilterCategory('all');
+    setFilterDateFrom('');
+    setFilterDateTo('');
+  };
 
   const mapEvent = (e) => ({
     _id: e._id,
@@ -186,7 +199,13 @@ export default function OrganizerMyEvents() {
     load();
   }, []);
 
-  const displayed = filterStatus === 'all' ? events : events.filter(e => e.status === filterStatus);
+  const displayed = events.filter(e => {
+    if (filterStatus !== 'all' && e.status !== filterStatus) return false;
+    if (filterCategory !== 'all' && e.category !== filterCategory) return false;
+    if (filterDateFrom && new Date(e.date) < new Date(filterDateFrom)) return false;
+    if (filterDateTo && new Date(e.date) > new Date(filterDateTo + 'T23:59:59')) return false;
+    return true;
+  });
 
   const handleSave = async (formData) => {
     const { imageFile, ...rest } = formData;
@@ -311,6 +330,48 @@ export default function OrganizerMyEvents() {
         ))}
       </div>
 
+      {/* Category + Date filters */}
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label className="block text-[10px] font-medium text-slate-500 mb-1 uppercase tracking-wider">Category</label>
+          <select
+            value={filterCategory}
+            onChange={e => setFilterCategory(e.target.value)}
+            className="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-300 focus:outline-none focus:border-indigo-500/50 transition-all"
+          >
+            <option value="all">All Categories</option>
+            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-[10px] font-medium text-slate-500 mb-1 uppercase tracking-wider">From</label>
+          <input
+            type="date"
+            value={filterDateFrom}
+            onChange={e => setFilterDateFrom(e.target.value)}
+            className="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-300 focus:outline-none focus:border-indigo-500/50 transition-all"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] font-medium text-slate-500 mb-1 uppercase tracking-wider">To</label>
+          <input
+            type="date"
+            value={filterDateTo}
+            onChange={e => setFilterDateTo(e.target.value)}
+            className="px-3 py-1.5 rounded-xl text-xs bg-white/5 border border-white/10 text-slate-300 focus:outline-none focus:border-indigo-500/50 transition-all"
+          />
+        </div>
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 bg-white/5 hover:bg-white/10 hover:text-white transition-all"
+          >
+            <RotateCcw size={12} />
+            Clear
+          </button>
+        )}
+      </div>
+
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl p-4">
         <DataTable
           columns={columns}
@@ -320,6 +381,13 @@ export default function OrganizerMyEvents() {
           emptyMessage="No events found"
           actions={(row) => (
             <>
+              <button
+                onClick={() => navigate(`/organizer/events/${row._id}`)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                title="Preview"
+              >
+                <Eye size={14} />
+              </button>
               <button
                 onClick={() => { setEditTarget(row); setModalOpen(true); }}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"

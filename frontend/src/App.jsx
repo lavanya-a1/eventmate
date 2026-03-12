@@ -31,6 +31,7 @@ import OrganizerLayout from './organizer/components/layout/OrganizerLayout';
 import OrganizerDashboard from './organizer/pages/OrganizerDashboard';
 import OrganizerMyEvents from './organizer/pages/OrganizerMyEvents';
 import OrganizerEventBookings from './organizer/pages/OrganizerEventBookings';
+import OrganizerEventPreview from './organizer/pages/OrganizerEventPreview';
 import OrganizerSettings from './organizer/pages/OrganizerSettings';
 
 import './index.css';
@@ -122,6 +123,7 @@ function AppRoutes() {
       <Route element={<OrganizerRoute><OrganizerLayout /></OrganizerRoute>}>
         <Route path="/organizer" element={<OrganizerDashboard />} />
         <Route path="/organizer/events" element={<OrganizerMyEvents />} />
+        <Route path="/organizer/events/:id" element={<OrganizerEventPreview />} />
         <Route path="/organizer/bookings" element={<OrganizerEventBookings />} />
         <Route path="/organizer/settings" element={<OrganizerSettings />} />
       </Route>
