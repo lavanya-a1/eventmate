@@ -7,29 +7,14 @@ import AdminButton from '../components/ui/AdminButton';
 import { toast } from '../components/ui/Toast';
 import { getAdminUsers, updateUserRole, toggleUserBlock, deleteUser, getUserBookings } from '../api/adminApi';
 
-const MOCK_USERS = [
-  { _id: '1', name: 'Alice Johnson', email: 'alice@example.com', role: 'user', blocked: false, bookings: 12, createdAt: '2025-11-10', avatar: '' },
-  { _id: '2', name: 'Bob Smith', email: 'bob@example.com', role: 'organizer', blocked: false, bookings: 5, createdAt: '2025-10-22', avatar: '' },
-  { _id: '3', name: 'Clara Davis', email: 'clara@example.com', role: 'admin', blocked: false, bookings: 0, createdAt: '2025-09-01', avatar: '' },
-  { _id: '4', name: 'Dan Miller', email: 'dan@example.com', role: 'user', blocked: true, bookings: 3, createdAt: '2025-12-05', avatar: '' },
-  { _id: '5', name: 'Eva Grant', email: 'eva@example.com', role: 'user', blocked: false, bookings: 21, createdAt: '2026-01-15', avatar: '' },
-  { _id: '6', name: 'Frank Lee', email: 'frank@example.com', role: 'organizer', blocked: false, bookings: 0, createdAt: '2026-02-01', avatar: '' },
-];
-
-const MOCK_BOOKINGS = [
-  { _id: 'b1', event: 'Summer Music Fest 2026', date: '2026-07-15', amount: 89, status: 'confirmed' },
-  { _id: 'b2', event: 'Tech Summit 2026', date: '2026-08-20', amount: 299, status: 'confirmed' },
-  { _id: 'b3', event: 'Jazz Night Live', date: '2026-06-10', amount: 55, status: 'cancelled' },
-];
-
 const roleIcon = { admin: Crown, organizer: ShieldCheck, user: UserIcon };
 const roleVariant = { admin: 'error', organizer: 'info', user: 'gray' };
 
 export default function UserManagement() {
-  const [users, setUsers] = useState(MOCK_USERS);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewUser, setViewUser] = useState(null);
-  const [userBookings, setUserBookings] = useState(MOCK_BOOKINGS);
+  const [userBookings, setUserBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [filterRole, setFilterRole] = useState('all');
@@ -38,8 +23,11 @@ export default function UserManagement() {
     const load = async () => {
       try {
         const res = await getAdminUsers();
-        if (res.data?.data?.length) setUsers(res.data.data);
-      } catch (_) { /* use mock */ }
+        setUsers(Array.isArray(res.data?.data) ? res.data.data : []);
+      } catch (_) {
+        setUsers([]);
+        toast.error('Failed to load users');
+      }
       setLoading(false);
     };
     load();
@@ -47,11 +35,15 @@ export default function UserManagement() {
 
   const handleViewBookings = async (user) => {
     setViewUser(user);
+    setUserBookings([]);
     setBookingsLoading(true);
     try {
       const res = await getUserBookings(user._id);
-      setUserBookings(res.data?.data || MOCK_BOOKINGS);
-    } catch (_) { setUserBookings(MOCK_BOOKINGS); }
+      setUserBookings(Array.isArray(res.data?.data) ? res.data.data : []);
+    } catch (_) {
+      setUserBookings([]);
+      toast.error('Failed to load booking history');
+    }
     setBookingsLoading(false);
   };
 
