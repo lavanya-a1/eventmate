@@ -14,6 +14,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Landing from './pages/Landing';
+import NotFound from './pages/NotFound';
 
 // Admin
 import AdminLayout from './admin/components/layout/AdminLayout';
@@ -81,16 +82,6 @@ function OrganizerRoute({ children }) {
   return children;
 }
 
-/** Catch-all: send admins to /admin, organizers to /organizer, users to /dashboard, guests to / */
-function DefaultRedirect() {
-  const { user, loading } = useAuth();
-  if (loading) return null;
-  if (!user) return <Navigate to="/" replace />;
-  if (user.role === 'admin') return <Navigate to="/admin" replace />;
-  if (user.role === 'organizer') return <Navigate to="/organizer" replace />;
-  return <Navigate to="/dashboard" replace />;
-}
-
 function AppRoutes() {
   return (
     <Routes>
@@ -135,7 +126,7 @@ function AppRoutes() {
         <Route path="/organizer/settings" element={<RouteErrorBoundary><OrganizerSettings /></RouteErrorBoundary>} />
       </Route>
 
-      <Route path="*" element={<DefaultRedirect />} />
+      <Route path="*" element={<RouteErrorBoundary><NotFound /></RouteErrorBoundary>} />
     </Routes>
   );
 }
