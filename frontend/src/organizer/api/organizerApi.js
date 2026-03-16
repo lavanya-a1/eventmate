@@ -27,4 +27,4 @@ export const updateEvent = (id, data) => {
 export const deleteEvent = (id) => api.delete(`/events/${id}`);
 
 // ─── Bookings for a specific event ────────────────────────────────────────────
-export const getEventBookings = (eventId) => api.get(`/bookings/event/${eventId}`);
+export const getEventBookings = (eventId, params) => api.get(`/bookings/event/${eventId}`, { params });

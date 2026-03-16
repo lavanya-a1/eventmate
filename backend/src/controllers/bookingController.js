@@ -131,6 +131,10 @@ exports.cancelBooking = asyncHandler(async (req, res) => {
  */
 exports.getEventBookings = asyncHandler(async (req, res) => {
   const { eventId } = req.params;
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const rawLimit = parseInt(req.query.limit, 10) || 20;
+  const limit = Math.min(Math.max(rawLimit, 1), 100);
+  const skip = (page - 1) * limit;
 
   const event = await Event.findById(eventId);
   if (!event) {
@@ -142,13 +146,22 @@ exports.getEventBookings = asyncHandler(async (req, res) => {
     return res.status(403).json({ success: false, message: "Not authorized to view bookings for this event" });
   }
 
-  const bookings = await Booking.find({ event: eventId, status: "confirmed" })
+  const filter = { event: eventId, status: "confirmed" };
+
+  const total = await Booking.countDocuments(filter);
+  const bookings = await Booking.find(filter)
     .populate("user", "name email")
-    .sort("-createdAt");
+    .sort("-createdAt")
+    .skip(skip)
+    .limit(limit);
 
   res.json({
     success: true,
     results: bookings.length,
+    total,
+    page,
+    pages: Math.ceil(total / limit) || 1,
+    limit,
     data: bookings,
   });
 });

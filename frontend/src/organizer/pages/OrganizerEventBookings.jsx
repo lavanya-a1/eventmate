@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Loader2, ChevronDown } from 'lucide-react';
+import { BookOpen, Loader2, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getOrganizerEvents, getEventBookings } from '../api/organizerApi';
 import { toast } from '../../admin/components/ui/Toast';
 
@@ -20,6 +20,10 @@ export default function OrganizerEventBookings() {
   const [bookings, setBookings] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [loadingBookings, setLoadingBookings] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
+  const [totalBookings, setTotalBookings] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Load organizer's events for the dropdown
   useEffect(() => {
@@ -38,21 +42,37 @@ export default function OrganizerEventBookings() {
 
   // Load bookings when an event is selected
   useEffect(() => {
-    if (!selectedEventId) { setBookings([]); return; }
+    if (!selectedEventId) {
+      setBookings([]);
+      setTotalBookings(0);
+      setTotalPages(1);
+      return;
+    }
     const load = async () => {
       setLoadingBookings(true);
       try {
-        const res = await getEventBookings(selectedEventId);
+        const res = await getEventBookings(selectedEventId, { page, limit });
         setBookings(res.data?.data || []);
+        setTotalBookings(Number(res.data?.total) || 0);
+        setTotalPages(Math.max(Number(res.data?.pages) || 1, 1));
       } catch {
         toast.error('Failed to load bookings');
         setBookings([]);
+        setTotalBookings(0);
+        setTotalPages(1);
       } finally {
         setLoadingBookings(false);
       }
     };
     load();
+  }, [selectedEventId, page, limit]);
+
+  useEffect(() => {
+    setPage(1);
   }, [selectedEventId]);
+
+  const pageStart = totalBookings === 0 ? 0 : (page - 1) * limit + 1;
+  const pageEnd = totalBookings === 0 ? 0 : Math.min(page * limit, totalBookings);
 
   return (
     <div className="space-y-6">
@@ -68,7 +88,10 @@ export default function OrganizerEventBookings() {
         <div className="relative">
           <select
             value={selectedEventId}
-            onChange={(e) => setSelectedEventId(e.target.value)}
+            onChange={(e) => {
+              setSelectedEventId(e.target.value);
+              setPage(1);
+            }}
             disabled={loadingEvents}
             className="w-full appearance-none px-4 py-2.5 pr-10 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
           >
@@ -104,8 +127,13 @@ export default function OrganizerEventBookings() {
           </div>
         ) : (
           <>
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">{bookings.length} booking{bookings.length !== 1 ? 's' : ''}</p>
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                {totalBookings} booking{totalBookings !== 1 ? 's' : ''}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                Showing {pageStart}-{pageEnd} of {totalBookings}
+              </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -136,6 +164,31 @@ export default function OrganizerEventBookings() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                Page {page} of {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                  disabled={page <= 1 || loadingBookings}
+                  className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={14} />
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={page >= totalPages || loadingBookings}
+                  className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                  <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
           </>
         )}
