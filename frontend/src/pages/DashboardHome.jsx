@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Calendar, Ticket, CheckCircle, Bell, TrendingUp, ArrowRight, Loader2 } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import { getDashboardSummary } from '../api/user';
 import { getMyBookings } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
+import { useRealtimeRefresh } from '../hooks/useRealtimeRefresh';
 
 // -- Skeleton for stat cards --------------------------------------------
 const StatSkeleton = () => (
@@ -21,8 +22,19 @@ export default function DashboardHome() {
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    const { data: summaryData, loading: summaryLoading } = useApi(getDashboardSummary);
-    const { data: bookingsData, loading: bookingsLoading } = useApi(getMyBookings);
+    const { data: summaryData, loading: summaryLoading, refetch: refetchSummary } = useApi(getDashboardSummary);
+    const { data: bookingsData, loading: bookingsLoading, refetch: refetchBookings } = useApi(getMyBookings);
+
+    const refreshDashboard = useCallback(() => {
+        refetchSummary();
+        refetchBookings();
+    }, [refetchSummary, refetchBookings]);
+
+    useRealtimeRefresh({
+        enabled: Boolean(user),
+        onRefresh: refreshDashboard,
+        eventTypes: ['booking.created', 'booking.cancelled', 'payment.success', 'payment.failed'],
+    });
 
     const summary = summaryData?.summary;
     const allBookings = bookingsData?.data || [];

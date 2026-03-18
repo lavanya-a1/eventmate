@@ -14,6 +14,7 @@ import {
   getAdminStats, getRecentActivity,
   getAdminUsers, getAdminBookings, getAdminEvents, getPayments,
 } from '../api/adminApi';
+import { useRealtimeRefresh } from '../../hooks/useRealtimeRefresh';
 
 const CAT_COLORS = ['#7c3aed','#4f46e5','#0891b2','#059669','#d97706','#dc2626','#db2777','#0284c7'];
 
@@ -350,28 +351,35 @@ export default function AdminDashboardHome() {
   const [actLoading, setActLoading] = useState(true);
   const [activeCard, setActiveCard] = useState(null);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [statsRes, actRes] = await Promise.all([getAdminStats(), getRecentActivity()]);
-        const d = statsRes.data?.data;
-        if (d) {
-          setStats(d.kpis || {});
-          setChartData(d.chartData || []);
-          const raw = d.categoryBreakdown || [];
-          const total = raw.reduce((s, c) => s + c.value, 0) || 1;
-          setCategories(raw.map((c, i) => ({
-            name: c.name, value: Math.round((c.value / total) * 100),
-            raw: c.value, color: CAT_COLORS[i % CAT_COLORS.length],
-          })));
-        }
-        setActivity(actRes?.data?.data || []);
-      } catch (_) {}
-      setLoading(false);
-      setActLoading(false);
-    };
-    load();
+  const load = useCallback(async () => {
+    try {
+      const [statsRes, actRes] = await Promise.all([getAdminStats(), getRecentActivity()]);
+      const d = statsRes.data?.data;
+      if (d) {
+        setStats(d.kpis || {});
+        setChartData(d.chartData || []);
+        const raw = d.categoryBreakdown || [];
+        const total = raw.reduce((s, c) => s + c.value, 0) || 1;
+        setCategories(raw.map((c, i) => ({
+          name: c.name, value: Math.round((c.value / total) * 100),
+          raw: c.value, color: CAT_COLORS[i % CAT_COLORS.length],
+        })));
+      }
+      setActivity(actRes?.data?.data || []);
+    } catch (_) {}
+    setLoading(false);
+    setActLoading(false);
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useRealtimeRefresh({
+    enabled: true,
+    onRefresh: load,
+    eventTypes: ['booking.created', 'booking.cancelled', 'payment.success', 'payment.failed', 'event.created', 'event.updated', 'event.deleted', 'feedback.created'],
+  });
 
   const handleCardClick = (id) => setActiveCard(id);
   const closeModal = () => setActiveCard(null);

@@ -1,4 +1,5 @@
 const Feedback = require('../models/Feedback');
+const { publishRealtimeEvent } = require('../services/realtimeService');
 
 exports.createFeedback = async (req, res) => {
     try {
@@ -13,6 +14,12 @@ exports.createFeedback = async (req, res) => {
             event,
             rating,
             comment
+        });
+
+        publishRealtimeEvent({
+            type: 'feedback.created',
+            payload: { feedbackId: String(feedback._id), eventId: String(event) },
+            roles: ['admin', 'organizer'],
         });
 
         res.status(201).json({ success: true, data: feedback });

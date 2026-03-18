@@ -3,6 +3,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const Booking = require("../models/Booking");
 const Event = require("../models/Event");
 const Notification = require("../models/Notification");
+const { publishRealtimeEvent } = require("../services/realtimeService");
 
 exports.createBooking = asyncHandler(async (req, res) => {
   const userId = req.user.id;
@@ -71,6 +72,18 @@ exports.createBooking = asyncHandler(async (req, res) => {
       type: 'info'
     });
 
+    publishRealtimeEvent({
+      type: 'booking.created',
+      payload: { bookingId: String(booking._id), eventId: String(eventId) },
+      userIds: [String(userId)],
+    });
+
+    publishRealtimeEvent({
+      type: 'booking.created',
+      payload: { bookingId: String(booking._id), eventId: String(eventId) },
+      roles: ["admin", "organizer"],
+    });
+
     return res.status(201).json({
       success: true,
       data: {
@@ -120,6 +133,18 @@ exports.cancelBooking = asyncHandler(async (req, res) => {
     { _id: booking.event, bookedSeats: { $gt: 0 } },
     { $inc: { bookedSeats: -booking.seats } }
   );
+
+  publishRealtimeEvent({
+    type: 'booking.cancelled',
+    payload: { bookingId: String(booking._id), eventId: String(booking.event) },
+    userIds: [String(req.user.id)],
+  });
+
+  publishRealtimeEvent({
+    type: 'booking.cancelled',
+    payload: { bookingId: String(booking._id), eventId: String(booking.event) },
+    roles: ["admin", "organizer"],
+  });
 
   res.json({ success: true, message: "Booking cancelled" });
 });

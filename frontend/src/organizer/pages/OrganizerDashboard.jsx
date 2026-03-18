@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Calendar, BookOpen, DollarSign, Activity,
   Users, Star, TrendingUp, Loader2,
 } from 'lucide-react';
 import { getOrganizerDashboard } from '../api/organizerApi';
+import { useRealtimeRefresh } from '../../hooks/useRealtimeRefresh';
 
 function Skeleton({ className = '' }) {
   return <div className={`animate-pulse rounded-lg bg-gray-100 dark:bg-slate-800 ${className}`} />;
@@ -25,19 +26,27 @@ export default function OrganizerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await getOrganizerDashboard();
-        setData(res.data?.data);
-      } catch {
-        setError('Failed to load dashboard');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+  const load = useCallback(async () => {
+    try {
+      const res = await getOrganizerDashboard();
+      setData(res.data?.data);
+      setError(null);
+    } catch {
+      setError('Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useRealtimeRefresh({
+    enabled: true,
+    onRefresh: load,
+    eventTypes: ['booking.created', 'booking.cancelled', 'payment.success', 'payment.failed', 'event.created', 'event.updated', 'event.deleted', 'feedback.created'],
+  });
 
   const kpis = data ? [
     { title: 'Total Events', value: data.totalEvents, icon: Calendar, accent: 'bg-gradient-to-br from-indigo-500 to-indigo-600', sub: `${data.activeEvents} active` },

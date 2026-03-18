@@ -1,5 +1,6 @@
 const asyncHandler = require("../utils/asyncHandler");
 const Event = require("../models/Event");
+const { publishRealtimeEvent } = require("../services/realtimeService");
 
 /**
  * @desc    Get all events with pagination, search, and filters
@@ -134,6 +135,12 @@ exports.createEvent = asyncHandler(async (req, res) => {
 
   const event = await Event.create(eventData);
 
+  publishRealtimeEvent({
+    type: 'event.created',
+    payload: { eventId: String(event._id) },
+    roles: ["admin", "organizer"],
+  });
+
   res.status(201).json({
     success: true,
     data: event,
@@ -162,6 +169,12 @@ exports.updateEvent = asyncHandler(async (req, res) => {
     runValidators: true,
   });
 
+  publishRealtimeEvent({
+    type: 'event.updated',
+    payload: { eventId: String(event._id) },
+    roles: ["admin", "organizer"],
+  });
+
   res.json({ success: true, data: event });
 });
 
@@ -184,6 +197,12 @@ exports.deleteEvent = asyncHandler(async (req, res) => {
 
   event.isDeleted = true;
   await event.save();
+
+  publishRealtimeEvent({
+    type: 'event.deleted',
+    payload: { eventId: String(event._id) },
+    roles: ["admin", "organizer"],
+  });
 
   res.json({ success: true, message: "Event removed successfully" });
 });

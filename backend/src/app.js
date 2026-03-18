@@ -60,6 +60,7 @@ app.use("/api/notifications", require("./routes/notification.routes"));
 app.use("/api/feedback", require("./routes/feedback.routes"));
 app.use("/api/payments", require("./routes/payment.routes"));
 app.use("/api/qrcode", require("./routes/qr.routes"));
+app.use("/api/realtime", require("./routes/realtime.routes"));
 
 app.use(errorHandler);
 

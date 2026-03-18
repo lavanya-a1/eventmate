@@ -2,6 +2,7 @@ const Payment = require('../models/Payment');
 const Booking = require('../models/Booking');
 const Event = require('../models/Event');
 const Notification = require('../models/Notification');
+const { publishRealtimeEvent } = require('../services/realtimeService');
 
 exports.simulatePayment = async (req, res) => {
   try {
@@ -72,6 +73,17 @@ exports.simulatePayment = async (req, res) => {
         message: `Your booking for "${event?.title || 'event'}" has been confirmed. Transaction ID: ${payment.transactionId}`,
         type: 'transactional',
       });
+
+      publishRealtimeEvent({
+        type: 'payment.success',
+        payload: { bookingId: String(booking._id), eventId: String(booking.event) },
+        userIds: [String(req.user.id)],
+      });
+      publishRealtimeEvent({
+        type: 'payment.success',
+        payload: { bookingId: String(booking._id), eventId: String(booking.event) },
+        roles: ['admin', 'organizer'],
+      });
     } else {
       booking.status = 'cancelled';
       await booking.save();
@@ -86,6 +98,17 @@ exports.simulatePayment = async (req, res) => {
         title: 'Payment Failed',
         message: 'Your payment was unsuccessful and the booking has been cancelled. Please try again.',
         type: 'error',
+      });
+
+      publishRealtimeEvent({
+        type: 'payment.failed',
+        payload: { bookingId: String(booking._id), eventId: String(booking.event) },
+        userIds: [String(req.user.id)],
+      });
+      publishRealtimeEvent({
+        type: 'payment.failed',
+        payload: { bookingId: String(booking._id), eventId: String(booking.event) },
+        roles: ['admin', 'organizer'],
       });
     }
 
