@@ -166,3 +166,51 @@ exports.getEventBookings = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * @desc    Export attendees for a specific event as CSV (Organizer only)
+ * @route   GET /api/bookings/event/:eventId/export
+ * @access  Protected (Organizer or Admin)
+ */
+exports.exportEventAttendees = asyncHandler(async (req, res) => {
+  const { eventId } = req.params;
+
+  const event = await Event.findById(eventId).lean();
+  if (!event) {
+    return res.status(404).json({ success: false, message: "Event not found" });
+  }
+
+  if (event.organizer.toString() !== req.user.id && req.user.role !== "admin") {
+    return res.status(403).json({ success: false, message: "Not authorized to export attendees for this event" });
+  }
+
+  const attendees = await Booking.find({ event: eventId, status: "confirmed" })
+    .populate("user", "name email")
+    .sort("-createdAt")
+    .lean();
+
+  const headers = ["Booking ID", "Attendee Name", "Attendee Email", "Seats", "Amount", "Status", "Booked At"];
+  const rows = attendees.map((b) => [
+    b._id,
+    b.user?.name || "",
+    b.user?.email || "",
+    b.seats || 1,
+    b.amount || 0,
+    b.status || "",
+    b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "",
+  ]);
+
+  const csv = [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
+
+  const safeTitle = String(event.title || "event")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60) || "event";
+
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", `attachment; filename="attendees-${safeTitle}-${Date.now()}.csv"`);
+  res.send(csv);
+});
+

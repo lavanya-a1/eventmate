@@ -28,3 +28,4 @@ export const deleteEvent = (id) => api.delete(`/events/${id}`);
 
 // ─── Bookings for a specific event ────────────────────────────────────────────
 export const getEventBookings = (eventId, params) => api.get(`/bookings/event/${eventId}`, { params });
+export const exportEventAttendees = (eventId) => api.get(`/bookings/event/${eventId}/export`, { responseType: 'blob' });

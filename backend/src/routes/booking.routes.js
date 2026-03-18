@@ -21,5 +21,8 @@ router.delete("/:id", bookingController.cancelBooking);
 // Get bookings for an event (Organizer only)
 router.get("/event/:eventId", bookingController.getEventBookings);
 
+// Export attendees for an event (Organizer only)
+router.get("/event/:eventId/export", bookingController.exportEventAttendees);
+
 module.exports = router;
 

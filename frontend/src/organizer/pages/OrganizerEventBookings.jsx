@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Loader2, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getOrganizerEvents, getEventBookings } from '../api/organizerApi';
+import { BookOpen, Loader2, ChevronDown, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { getOrganizerEvents, getEventBookings, exportEventAttendees } from '../api/organizerApi';
 import { toast } from '../../admin/components/ui/Toast';
 
 function fmt(date) {
@@ -24,6 +24,7 @@ export default function OrganizerEventBookings() {
   const [limit] = useState(20);
   const [totalBookings, setTotalBookings] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [exporting, setExporting] = useState(false);
 
   // Load organizer's events for the dropdown
   useEffect(() => {
@@ -74,12 +75,48 @@ export default function OrganizerEventBookings() {
   const pageStart = totalBookings === 0 ? 0 : (page - 1) * limit + 1;
   const pageEnd = totalBookings === 0 ? 0 : Math.min(page * limit, totalBookings);
 
+  const handleExportAttendees = async () => {
+    if (!selectedEventId) return;
+    setExporting(true);
+    try {
+      const res = await exportEventAttendees(selectedEventId);
+      const blob = new Blob([res.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const selectedEvent = events.find((ev) => ev._id === selectedEventId);
+      const slug = String(selectedEvent?.title || selectedEventId)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'event';
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `attendees-${slug}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success('Attendee list exported');
+    } catch {
+      toast.error('Failed to export attendee list');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Event Bookings</h2>
-        <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">View bookings for each of your events</p>
+        <button
+          type="button"
+          onClick={handleExportAttendees}
+          disabled={!selectedEventId || exporting}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 text-white px-4 py-2 text-sm font-semibold hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {exporting ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+          Export Attendees CSV
+        </button>
+      </div>
+      <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">View bookings for each of your events</p>
       </div>
 
       {/* Event selector */}

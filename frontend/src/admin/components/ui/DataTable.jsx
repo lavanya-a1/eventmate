@@ -60,6 +60,18 @@ export default function DataTable({
     ))
   );
 
+  const MobileSkeleton = () => (
+    <div className="space-y-3 p-3 sm:p-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="animate-pulse rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+          <div className="h-4 bg-white/10 rounded w-2/3" />
+          <div className="h-3 bg-white/10 rounded w-1/2" />
+          <div className="h-3 bg-white/10 rounded w-3/4" />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       {searchable && (
@@ -74,7 +86,42 @@ export default function DataTable({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-white/10">
+      <div className="md:hidden rounded-xl border border-white/10 bg-white/[0.02]">
+        {loading ? (
+          <MobileSkeleton />
+        ) : paged.length === 0 ? (
+          <div className="px-4 py-12 text-center text-slate-500 text-sm">{emptyMessage}</div>
+        ) : (
+          <div className="space-y-3 p-3 sm:p-4">
+            {paged.map((row, i) => (
+              <div
+                key={row._id || i}
+                className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3"
+              >
+                {columns.map((col) => (
+                  <div key={col.key || col.accessor} className="flex items-start justify-between gap-3">
+                    <span className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold pt-0.5">
+                      {col.label}
+                    </span>
+                    <div className="text-sm text-slate-200 text-right min-w-0 break-words">
+                      {col.render ? col.render(row) : row[col.accessor]}
+                    </div>
+                  </div>
+                ))}
+
+                {actions && (
+                  <div className="pt-1 border-t border-white/10">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500 font-semibold mb-2">Actions</p>
+                    <div className="flex flex-wrap items-center gap-2">{actions(row)}</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-white/10">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/10 bg-white/5">
