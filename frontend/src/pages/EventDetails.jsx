@@ -18,6 +18,7 @@ const EventDetails = () => {
     const [booking, setBooking] = useState(false);
     const [seats, setSeats] = useState(1);
     const [isBooked, setIsBooked] = useState(false);
+    const [bookingStatus, setBookingStatus] = useState(null);
     const [message, setMessage] = useState({ text: '', type: '' });
 
     useEffect(() => {
@@ -29,7 +30,12 @@ const EventDetails = () => {
                 if (user) {
                     const bookingsRes = await api.get('/bookings/me');
                     const bookings = bookingsRes.data.data || [];
-                    setIsBooked(bookings.some(b => b.event._id === id || b.event === id));
+                    const activeBooking = bookings.find((b) => {
+                        const bookingEventId = b.event?._id || b.event;
+                        return String(bookingEventId) === String(id) && b.status !== 'cancelled';
+                    });
+                    setIsBooked(Boolean(activeBooking));
+                    setBookingStatus(activeBooking?.status || null);
                 }
             } catch (err) {
                 console.error('Error fetching event:', err);
@@ -55,9 +61,16 @@ const EventDetails = () => {
         if (!user) { navigate('/'); return; }
         setBooking(true);
         try {
-            await api.post(`/events/${id}/book`, { seats });
+            const res = await api.post(`/events/${id}/book`, { seats });
+            const newStatus = res.data?.data?.booking?.status || 'pending';
             setIsBooked(true);
-            setMessage({ text: 'Successfully registered for this event!', type: 'success' });
+            setBookingStatus(newStatus);
+            setMessage({
+                text: newStatus === 'waitlisted'
+                    ? 'Event is sold out. You have been added to the waitlist.'
+                    : 'Successfully registered for this event!',
+                type: 'success'
+            });
             const res = await api.get(`/events/${id}`);
             setEvent(res.data.data);
         } catch (err) {
@@ -230,10 +243,12 @@ const EventDetails = () => {
 
                         <button
                             onClick={handleBook}
-                            disabled={booking || isBooked || isFull || isPast}
+                            disabled={booking || isBooked || isPast}
                             className={`w-full sm:w-auto px-10 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all text-lg ${isBooked
-                                ? 'bg-success/10 text-success border border-success/20 cursor-default'
-                                : isFull || isPast
+                                ? bookingStatus === 'waitlisted'
+                                    ? 'bg-primary/10 text-primary border border-primary/20 cursor-default'
+                                    : 'bg-success/10 text-success border border-success/20 cursor-default'
+                                : isPast
                                     ? 'bg-white/5 text-text-muted cursor-not-allowed border border-theme-strong'
                                     : 'btn-primary'
                                 }`}
@@ -241,11 +256,11 @@ const EventDetails = () => {
                             {booking ? (
                                 <><Loader2 size={20} className="animate-spin" /> Booking...</>
                             ) : isBooked ? (
-                                <><CheckCircle2 size={20} /> Registered</>
+                                <><CheckCircle2 size={20} /> {bookingStatus === 'waitlisted' ? 'Waitlisted' : 'Registered'}</>
                             ) : isPast ? (
                                 <><Clock size={20} /> Event Ended</>
                             ) : isFull ? (
-                                <><AlertCircle size={20} /> Sold Out</>
+                                <><AlertCircle size={20} /> Join Waitlist</>
                             ) : (
                                 <><Ticket size={20} /> Register Now</>
                             )}

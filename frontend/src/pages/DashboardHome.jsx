@@ -33,7 +33,7 @@ export default function DashboardHome() {
     useRealtimeRefresh({
         enabled: Boolean(user),
         onRefresh: refreshDashboard,
-        eventTypes: ['booking.created', 'booking.cancelled', 'payment.success', 'payment.failed'],
+        eventTypes: ['booking.created', 'booking.waitlisted', 'booking.cancelled', 'payment.success', 'payment.failed'],
     });
 
     const summary = summaryData?.summary;
@@ -46,6 +46,7 @@ export default function DashboardHome() {
     const statusStyle = (booking) => {
         if (booking.status === 'cancelled') return { bg: 'bg-red-500/10', text: 'text-red-400', label: 'Cancelled' };
         if (booking.status === 'pending')   return { bg: 'bg-amber-500/10', text: 'text-amber-400', label: 'Pending' };
+        if (booking.status === 'waitlisted') return { bg: 'bg-blue-500/10', text: 'text-blue-400', label: 'Waitlisted' };
         const past = new Date(booking.event?.date) < new Date();
         if (past) return { bg: 'bg-slate-500/10', text: 'text-slate-400', label: 'Completed' };
         return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', label: 'Confirmed' };

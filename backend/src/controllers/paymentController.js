@@ -25,6 +25,10 @@ exports.simulatePayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'This booking is already paid and confirmed' });
     }
 
+    if (booking.status === 'waitlisted') {
+      return res.status(400).json({ success: false, message: 'This booking is waitlisted and not ready for payment' });
+    }
+
     const event = booking.event;
     const amount =
       typeof booking.amount === 'number' && booking.amount > 0

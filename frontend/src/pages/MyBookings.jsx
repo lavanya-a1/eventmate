@@ -12,6 +12,7 @@ import { simulatePayment } from '../api/payments';
 const statusDisplay = (booking) => {
     if (booking.status === 'cancelled') return { label: 'Cancelled', variant: 'danger' };
     if (booking.status === 'pending')   return { label: 'Pending',   variant: 'warning' };
+    if (booking.status === 'waitlisted') return { label: 'Waitlisted', variant: 'primary' };
     const now = new Date();
     const eventDate = booking.event?.date ? new Date(booking.event.date) : null;
     if (eventDate && eventDate <= now)  return { label: 'Completed', variant: 'success' };
@@ -137,9 +138,10 @@ export default function MyBookings() {
                     {bookings.map((booking) => {
                         const ev = booking.event || {};
                         const { label: statusLabel, variant: statusVariant } = statusDisplay(booking);
-                        const isUpcoming  = statusLabel === 'Upcoming' || statusLabel === 'Pending';
+                        const isUpcoming  = statusLabel === 'Upcoming' || statusLabel === 'Pending' || statusLabel === 'Waitlisted';
                         const isCompleted = statusLabel === 'Completed';
                         const isCancelling = cancelling === booking._id;
+                        const canDownloadTicket = booking.status === 'confirmed';
 
                         return (
                             <Card key={booking._id}
@@ -193,13 +195,15 @@ export default function MyBookings() {
                                             </p>
                                         </div>
                                         <div className="flex flex-row lg:flex-col gap-2">
-                                            <button
-                                                onClick={() => navigate(`/tickets?bookingId=${booking._id}`)}
-                                                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg
-                                                           bg-primary-600 hover:bg-primary-500 text-white text-xs font-medium
-                                                           transition-colors">
-                                                <Download size={14} /> E-Ticket
-                                            </button>
+                                            {canDownloadTicket && (
+                                                <button
+                                                    onClick={() => navigate(`/tickets?bookingId=${booking._id}`)}
+                                                    className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg
+                                                               bg-primary-600 hover:bg-primary-500 text-white text-xs font-medium
+                                                               transition-colors">
+                                                    <Download size={14} /> E-Ticket
+                                                </button>
+                                            )}
                                             {booking.status === 'pending' && (
                                                 <button
                                                     onClick={() => handlePayment(booking._id, 'Card')}

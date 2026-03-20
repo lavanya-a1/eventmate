@@ -45,7 +45,7 @@ export default function OrganizerDashboard() {
   useRealtimeRefresh({
     enabled: true,
     onRefresh: load,
-    eventTypes: ['booking.created', 'booking.cancelled', 'payment.success', 'payment.failed', 'event.created', 'event.updated', 'event.deleted', 'feedback.created'],
+    eventTypes: ['booking.created', 'booking.waitlisted', 'booking.cancelled', 'payment.success', 'payment.failed', 'event.created', 'event.updated', 'event.deleted', 'feedback.created'],
   });
 
   const kpis = data ? [

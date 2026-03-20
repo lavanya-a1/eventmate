@@ -18,7 +18,7 @@ exports.createBooking = asyncHandler(async (req, res) => {
   const existing = await Booking.findOne({
     user: userId,
     event: eventId,
-    status: { $in: ["confirmed", "pending"] },
+    status: { $in: ["confirmed", "pending", "waitlisted"] },
   }).lean();
 
   if (existing) {
@@ -26,6 +26,55 @@ exports.createBooking = asyncHandler(async (req, res) => {
   }
 
   const now = new Date();
+  const event = await Event.findOne({ _id: eventId, isDeleted: false });
+  if (!event) {
+    return res.status(404).json({ success: false, message: "Event not found" });
+  }
+  if (event.date < now) {
+    return res.status(400).json({ success: false, message: "Cannot book past events" });
+  }
+
+  const createWaitlistBooking = async () => {
+    const waitlistedBooking = await Booking.create({
+      user: userId,
+      event: eventId,
+      status: "waitlisted",
+      seats,
+      amount: 0,
+    });
+
+    await Notification.create({
+      user: userId,
+      title: 'Added to Waitlist',
+      message: `"${event.title}" is currently sold out. You were added to the waitlist.`,
+      type: 'info'
+    });
+
+    publishRealtimeEvent({
+      type: 'booking.waitlisted',
+      payload: { bookingId: String(waitlistedBooking._id), eventId: String(eventId) },
+      userIds: [String(userId)],
+    });
+
+    publishRealtimeEvent({
+      type: 'booking.waitlisted',
+      payload: { bookingId: String(waitlistedBooking._id), eventId: String(eventId) },
+      roles: ["admin", "organizer"],
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Event is sold out. You have been added to the waitlist.",
+      data: {
+        booking: waitlistedBooking,
+        event,
+      },
+    });
+  };
+
+  if ((event.availableSeats ?? 0) < seats) {
+    return createWaitlistBooking();
+  }
 
   // Atomically reserve a seat (prevents overbooking under concurrency).
   const reservedEvent = await Event.findOneAndUpdate(
@@ -45,14 +94,7 @@ exports.createBooking = asyncHandler(async (req, res) => {
   );
 
   if (!reservedEvent) {
-    const event = await Event.findOne({ _id: eventId, isDeleted: false }).select("date capacity bookedSeats");
-    if (!event) {
-      return res.status(404).json({ success: false, message: "Event not found" });
-    }
-    if (event.date < now) {
-      return res.status(400).json({ success: false, message: "Cannot book past events" });
-    }
-    return res.status(400).json({ success: false, message: "Event is fully booked" });
+    return createWaitlistBooking();
   }
 
   try {
@@ -93,7 +135,7 @@ exports.createBooking = asyncHandler(async (req, res) => {
     });
   } catch (err) {
     // Compensate if booking creation failed after reserving seat.
-    await Event.updateOne({ _id: eventId, bookedSeats: { $gt: 0 } }, { $inc: { bookedSeats: -1 } });
+    await Event.updateOne({ _id: eventId, bookedSeats: { $gte: seats } }, { $inc: { bookedSeats: -seats } });
 
     if (err && err.code === 11000) {
       return res.status(409).json({ success: false, message: "You already booked this event" });
@@ -119,20 +161,23 @@ exports.cancelBooking = asyncHandler(async (req, res) => {
   const booking = await Booking.findOne({
     _id: bookingId,
     user: req.user.id,
-    status: { $in: ["confirmed", "pending"] },
+    status: { $in: ["confirmed", "pending", "waitlisted"] },
   });
 
   if (!booking) {
     return res.status(404).json({ success: false, message: "Booking not found" });
   }
 
+  const previousStatus = booking.status;
   booking.status = "cancelled";
   await booking.save();
 
-  await Event.updateOne(
-    { _id: booking.event, bookedSeats: { $gt: 0 } },
-    { $inc: { bookedSeats: -booking.seats } }
-  );
+  if (previousStatus !== "waitlisted") {
+    await Event.updateOne(
+      { _id: booking.event, bookedSeats: { $gt: 0 } },
+      { $inc: { bookedSeats: -booking.seats } }
+    );
+  }
 
   publishRealtimeEvent({
     type: 'booking.cancelled',

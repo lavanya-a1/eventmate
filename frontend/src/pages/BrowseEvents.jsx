@@ -95,18 +95,22 @@ export default function BrowseEvents() {
 
     // -- Book event --------------------------------------------
     const handleBook = async (eventId) => {
-        setBooking({ loading: true, error: null, success: false });
+        setBooking({ loading: true, error: null, success: false, successMessage: '' });
         try {
-            await createBooking(eventId);
-            setBooking({ loading: false, error: null, success: true });
+            const res = await createBooking(eventId);
+            const status = res?.data?.booking?.status;
+            const successMessage = status === 'waitlisted'
+                ? 'Event is sold out. You have been added to the waitlist.'
+                : 'Booking successful! Redirecting...';
+            setBooking({ loading: false, error: null, success: true, successMessage });
             setTimeout(() => {
                 setSelectedEvent(null);
-                setBooking({ loading: false, error: null, success: false });
+                setBooking({ loading: false, error: null, success: false, successMessage: '' });
                 navigate('/bookings');
             }, 1200);
         } catch (err) {
             const msg = err?.response?.data?.message || err?.message || 'Booking failed';
-            setBooking({ loading: false, error: msg, success: false });
+            setBooking({ loading: false, error: msg, success: false, successMessage: '' });
         }
     };
 
@@ -208,7 +212,7 @@ export default function BrowseEvents() {
                         <Card key={event._id}
                             className="p-0 border-theme hover:border-primary-500/40 group transition-all
                                        duration-300 flex flex-col cursor-pointer"
-                            onClick={() => { setSelectedEvent(event); setBooking({ loading: false, error: null, success: false }); }}>
+                            onClick={() => { setSelectedEvent(event); setBooking({ loading: false, error: null, success: false, successMessage: '' }); }}>
                             {/* Image */}
                             <div className="relative h-48 overflow-hidden">
                                 <img src={event.image || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=60'}
@@ -252,7 +256,7 @@ export default function BrowseEvents() {
                                         e.stopPropagation();
                                         const isPast = new Date(event.date) < new Date();
                                         if (!isPast) handleBook(event._id);
-                                        else { setSelectedEvent(event); setBooking({ loading: false, error: null, success: false }); }
+                                        else { setSelectedEvent(event); setBooking({ loading: false, error: null, success: false, successMessage: '' }); }
                                     }}
                                     disabled={booking.loading || new Date(event.date) < new Date()}
                                     className={`mt-4 w-full py-2 rounded-lg text-white text-sm font-medium transition-colors disabled:opacity-60 ${
@@ -260,7 +264,9 @@ export default function BrowseEvents() {
                                             ? 'bg-slate-600 cursor-not-allowed'
                                             : 'bg-primary-600 hover:bg-primary-500'
                                     }`}>
-                                    {new Date(event.date) < new Date() ? 'Event Ended' : 'Book Now'}
+                                    {new Date(event.date) < new Date()
+                                        ? 'Event Ended'
+                                        : (event.availableSeats <= 0 ? 'Join Waitlist' : 'Book Now')}
                                 </button>
                             </div>
                         </Card>
@@ -360,7 +366,7 @@ export default function BrowseEvents() {
                                         )}
                                         {booking.success && (
                                             <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-4">
-                                                <CheckCircle size={14} /> Booking successful! Redirecting...
+                                                <CheckCircle size={14} /> {booking.successMessage || 'Booking successful! Redirecting...'}
                                             </div>
                                         )}
                                         {isPast ? (
@@ -368,9 +374,15 @@ export default function BrowseEvents() {
                                                 This event has already ended
                                             </div>
                                         ) : isFull ? (
-                                            <div className="w-full py-3 rounded-xl bg-red-500/10 text-red-400 font-semibold text-sm text-center border border-red-500/20">
-                                                Sold Out
-                                            </div>
+                                            <button
+                                                onClick={() => handleBook(selectedEvent._id)}
+                                                disabled={booking.loading || booking.success}
+                                                className="w-full py-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold
+                                                           text-sm transition-colors disabled:opacity-60 flex items-center justify-center gap-2 border border-amber-500/30"
+                                            >
+                                                {booking.loading && <Loader2 size={16} className="animate-spin" />}
+                                                {booking.success ? 'Added to waitlist' : 'Join Waitlist'}
+                                            </button>
                                         ) : (
                                             <button
                                                 onClick={() => handleBook(selectedEvent._id)}
