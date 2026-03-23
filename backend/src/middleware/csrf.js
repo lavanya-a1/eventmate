@@ -2,6 +2,15 @@ const crypto = require('crypto');
 
 const CSRF_COOKIE = 'csrf_token';
 const CSRF_HEADER = 'x-csrf-token';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const COOKIE_SAME_SITE = 'Strict';
+const DEFAULT_ALLOWED_ORIGINS = ['http://localhost:5173', process.env.CLIENT_URL].filter(Boolean);
+const allowedOrigins = new Set(
+  (process.env.CORS_ORIGINS || DEFAULT_ALLOWED_ORIGINS.join(','))
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
 
 /**
  * CSRF protection using the double-submit cookie pattern.
@@ -22,8 +31,8 @@ function setCsrfCookie(res) {
   const token = crypto.randomBytes(32).toString('hex');
   res.cookie(CSRF_COOKIE, token, {
     httpOnly: false,       // must be readable by JS
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Lax',
+    secure: IS_PRODUCTION,
+    sameSite: COOKIE_SAME_SITE,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days (matches refresh token)
     path: '/',
   });
@@ -34,7 +43,12 @@ function setCsrfCookie(res) {
  * Clear the CSRF cookie (call on logout).
  */
 function clearCsrfCookie(res) {
-  res.clearCookie(CSRF_COOKIE, { path: '/' });
+  res.clearCookie(CSRF_COOKIE, {
+    httpOnly: false,
+    secure: IS_PRODUCTION,
+    sameSite: COOKIE_SAME_SITE,
+    path: '/',
+  });
 }
 
 /**
@@ -51,6 +65,14 @@ function verifyCsrf(req, res, next) {
   // Skip if user has no refresh token cookie (not using cookie-based auth)
   if (!req.cookies?.refreshToken) {
     return next();
+  }
+
+  const origin = req.headers.origin;
+  if (origin && !allowedOrigins.has(origin)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Request origin is not allowed',
+    });
   }
 
   const cookieToken = req.cookies[CSRF_COOKIE];

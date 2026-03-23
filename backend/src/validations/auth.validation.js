@@ -32,8 +32,7 @@ exports.resetPassword = Joi.object({
 });
 
 exports.refreshToken = Joi.object({
-  refreshToken: Joi.string().required()
-    .messages({ 'any.required': 'Refresh token is required' }),
+  refreshToken: Joi.string(),
 });
 
 exports.updateProfile = Joi.object({

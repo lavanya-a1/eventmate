@@ -2,21 +2,31 @@ const jwt = require("jsonwebtoken");
 
 const protect = (req, res, next) => {
   const authHeader = req.headers.authorization;
+  let token = null;
 
-  if (!authHeader) {
-    return res.status(401).json({ message: "No Authorization header" });
+  if (authHeader) {
+    const parts = authHeader.split(" ");
+
+    if (parts.length !== 2) {
+      return res.status(401).json({ message: "Token format invalid" });
+    }
+
+    const [scheme, bearerToken] = parts;
+
+    if (scheme !== "Bearer") {
+      return res.status(401).json({ message: "Token must start with Bearer" });
+    }
+
+    token = bearerToken;
+  } else {
+    token = req.cookies?.accessToken;
   }
 
-  const parts = authHeader.split(" ");
-
-  if (parts.length !== 2) {
-    return res.status(401).json({ message: "Token format invalid" });
-  }
-
-  const [scheme, token] = parts;
-
-  if (scheme !== "Bearer") {
-    return res.status(401).json({ message: "Token must start with Bearer" });
+  if (!token) {
+    if (req.cookies?.refreshToken) {
+      return res.status(401).json({ message: "Access token missing", code: "TOKEN_EXPIRED" });
+    }
+    return res.status(401).json({ message: "No auth token" });
   }
 
   try {

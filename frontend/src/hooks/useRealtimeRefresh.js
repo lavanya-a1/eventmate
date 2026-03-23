@@ -16,11 +16,8 @@ export function useRealtimeRefresh({ enabled = true, onRefresh, eventTypes, thro
   useEffect(() => {
     if (!enabled || typeof onRefresh !== 'function') return undefined;
 
-    const token = localStorage.getItem('token');
-    if (!token) return undefined;
-
     const origin = getApiOrigin();
-    const url = `${origin}/realtime/stream?token=${encodeURIComponent(token)}`;
+    const url = `${origin}/realtime/stream`;
     const source = new EventSource(url, { withCredentials: true });
 
     const allowed = Array.isArray(eventTypes) && eventTypes.length ? new Set(eventTypes) : null;

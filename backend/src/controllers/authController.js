@@ -9,7 +9,10 @@ const emailService = require("../services/emailService");
 const secrets = require("../config/secrets");
 
 const ACCESS_TOKEN_EXPIRY = "15m";
+const ACCESS_TOKEN_MAX_AGE_MS = 15 * 60 * 1000;
 const REFRESH_TOKEN_EXPIRY_DAYS = 7;
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const COOKIE_SAME_SITE = 'Strict';
 
 function generateAccessToken(user) {
   return jwt.sign(
@@ -33,21 +36,37 @@ async function generateRefreshToken(userId) {
 }
 
 /**
- * Set the refresh token as an httpOnly cookie + CSRF cookie.
+ * Set auth cookies for refresh/access tokens + CSRF cookie.
  */
-function setAuthCookies(res, refreshToken) {
+function setAuthCookies(res, { refreshToken, accessToken }) {
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Lax',
+    secure: IS_PRODUCTION,
+    sameSite: COOKIE_SAME_SITE,
     maxAge: REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
     path: '/',
   });
+
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: IS_PRODUCTION,
+    sameSite: COOKIE_SAME_SITE,
+    maxAge: ACCESS_TOKEN_MAX_AGE_MS,
+    path: '/',
+  });
+
   setCsrfCookie(res);
 }
 
 function clearAuthCookies(res) {
-  res.clearCookie('refreshToken', { path: '/' });
+  const clearOptions = {
+    httpOnly: true,
+    secure: IS_PRODUCTION,
+    sameSite: COOKIE_SAME_SITE,
+    path: '/',
+  };
+  res.clearCookie('refreshToken', clearOptions);
+  res.clearCookie('accessToken', clearOptions);
   clearCsrfCookie(res);
 }
 
@@ -188,13 +207,13 @@ exports.login = asyncHandler(async (req, res) => {
     await user.save();
   }
 
-  const token = generateAccessToken(user);
+  const accessToken = generateAccessToken(user);
   const refreshToken = await generateRefreshToken(user._id);
 
-  setAuthCookies(res, refreshToken);
+  setAuthCookies(res, { refreshToken, accessToken });
 
   res.json({
-    token,
+    success: true,
     user: {
       _id: user._id,
       name: user.name,
@@ -321,8 +340,8 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 });
 
 exports.refreshToken = asyncHandler(async (req, res) => {
-  // Read refresh token from httpOnly cookie (fallback to body for backward compat)
-  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+  // Read refresh token from httpOnly cookie.
+  const refreshToken = req.cookies?.refreshToken;
 
   if (!refreshToken) {
     return res.status(400).json({ message: "Refresh token is required" });
@@ -351,10 +370,10 @@ exports.refreshToken = asyncHandler(async (req, res) => {
   const newAccessToken = generateAccessToken(user);
   const newRefreshToken = await generateRefreshToken(user._id);
 
-  setAuthCookies(res, newRefreshToken);
+  setAuthCookies(res, { refreshToken: newRefreshToken, accessToken: newAccessToken });
 
   res.json({
-    token: newAccessToken,
+    success: true,
     user: {
       _id: user._id,
       name: user.name,
@@ -365,7 +384,7 @@ exports.refreshToken = asyncHandler(async (req, res) => {
 });
 
 exports.logout = asyncHandler(async (req, res) => {
-  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+  const refreshToken = req.cookies?.refreshToken;
 
   if (refreshToken) {
     await RefreshToken.deleteOne({ token: refreshToken });
@@ -388,11 +407,10 @@ exports.googleCallback = asyncHandler(async (req, res) => {
     return res.redirect(`${secrets.clientUrl}/?error=account_blocked`);
   }
 
-  const token = generateAccessToken(user);
+  const accessToken = generateAccessToken(user);
   const refreshToken = await generateRefreshToken(user._id);
 
-  setAuthCookies(res, refreshToken);
+  setAuthCookies(res, { refreshToken, accessToken });
 
-  // Pass only the access token via URL (refresh token is in httpOnly cookie)
-  res.redirect(`${secrets.clientUrl}/?oauth_token=${encodeURIComponent(token)}`);
+  res.redirect(`${secrets.clientUrl}/?oauth=success`);
 });

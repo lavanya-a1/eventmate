@@ -8,10 +8,17 @@ const rateLimit = require("express-rate-limit");
 const cookieParser = require("cookie-parser");
 const passport = require("./config/passport");
 const { verifyCsrf } = require("./middleware/csrf");
+const secrets = require("./config/secrets");
 
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
+const corsOrigins = new Set(
+  (process.env.CORS_ORIGINS || ["http://localhost:5173", secrets.clientUrl, "https://eventmate-frontend.onrender.com"].join(','))
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
 
 // Trust Render's reverse proxy so rate-limit, secure cookies, and
 // req.ip / req.protocol work correctly behind HTTPS termination.
@@ -20,10 +27,12 @@ app.set("trust proxy", 1);
 app.use(morgan("dev"));
 app.use(helmet());
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://eventmate-frontend.onrender.com"
-  ],
+  origin: (origin, callback) => {
+    if (!origin || corsOrigins.has(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true
 }));
 

@@ -9,15 +9,11 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const checkLoggedIn = async () => {
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const res = await api.get('/auth/me');
-                    setUser(res.data.data);
-                } catch (err) {
-                    localStorage.removeItem('token');
-                    setUser(null);
-                }
+            try {
+                const res = await api.get('/auth/me');
+                setUser(res.data.data);
+            } catch {
+                setUser(null);
             }
             setLoading(false);
         };
@@ -26,15 +22,11 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         const res = await api.post('/auth/login', { email, password });
-        localStorage.setItem('token', res.data.token);
-        // refresh token is now stored in httpOnly cookie by the server
         setUser(res.data.user);
         return res.data;
     };
 
-    const loginWithTokens = async (token) => {
-        localStorage.setItem('token', token);
-        // refresh token is already in httpOnly cookie from the OAuth redirect
+    const loginWithTokens = async () => {
         const res = await api.get('/auth/me');
         setUser(res.data.data);
     };
@@ -50,7 +42,6 @@ export const AuthProvider = ({ children }) => {
         } catch {
             // Ignore errors — we clear local state regardless
         }
-        localStorage.removeItem('token');
         setUser(null);
     };
 

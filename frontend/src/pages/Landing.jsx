@@ -25,7 +25,7 @@ const Landing = () => {
         }
 
         // Handle Google OAuth callback
-        const oauthToken = searchParams.get('oauth_token');
+        const oauthStatus = searchParams.get('oauth');
         const oauthError = searchParams.get('error');
 
         if (oauthError) {
@@ -34,10 +34,9 @@ const Landing = () => {
             return;
         }
 
-        if (oauthToken) {
+        if (oauthStatus === 'success') {
             setSearchParams({}, { replace: true });
-            // Refresh token is already in httpOnly cookie from the redirect
-            loginWithTokens(oauthToken)
+            loginWithTokens()
                 .then(() => navigate('/dashboard'))
                 .catch(() => setError('Failed to complete Google sign-in.'));
         }

@@ -16,14 +16,9 @@ function getCookie(name) {
     return match ? match[2] : null;
 }
 
-// Add a request interceptor to include auth token + CSRF header
+// Add a request interceptor to include CSRF header for cookie-authenticated calls.
 instance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-
         // Attach CSRF token for state-changing requests
         if (['post', 'put', 'patch', 'delete'].includes(config.method)) {
             const csrfToken = getCookie('csrf_token');
@@ -43,12 +38,12 @@ instance.interceptors.request.use(
 let isRefreshing = false;
 let failedQueue = [];
 
-const processQueue = (error, token = null) => {
+const processQueue = (error) => {
     failedQueue.forEach((prom) => {
         if (error) {
             prom.reject(error);
         } else {
-            prom.resolve(token);
+            prom.resolve();
         }
     });
     failedQueue = [];
@@ -63,14 +58,14 @@ instance.interceptors.response.use(
         if (
             error.response?.status === 401 &&
             error.response?.data?.code === 'TOKEN_EXPIRED' &&
+            !originalRequest.url?.includes('/auth/refresh-token') &&
             !originalRequest._retry
         ) {
             if (isRefreshing) {
                 // Queue this request until the refresh completes
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
-                }).then((token) => {
-                    originalRequest.headers.Authorization = `Bearer ${token}`;
+                }).then(() => {
                     return instance(originalRequest);
                 });
             }
@@ -86,16 +81,10 @@ instance.interceptors.response.use(
                     { withCredentials: true }
                 );
 
-                localStorage.setItem('token', data.token);
-
-                instance.defaults.headers.common.Authorization = `Bearer ${data.token}`;
-                originalRequest.headers.Authorization = `Bearer ${data.token}`;
-
-                processQueue(null, data.token);
+                processQueue(null);
                 return instance(originalRequest);
             } catch (refreshError) {
-                processQueue(refreshError, null);
-                localStorage.removeItem('token');
+                processQueue(refreshError);
                 window.location.href = '/';
                 return Promise.reject(refreshError);
             } finally {
