@@ -151,7 +151,7 @@ npm run preview      # Preview production build
 ### Required Environment Variables (Backend)
 ```env
 NODE_ENV=production
-MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/eventmate
+MONGO_URI=<your-mongodb-connection-string>
 JWT_SECRET=<strong-random-string>
 JWT_EXPIRY=15m
 REFRESH_TOKEN_EXPIRY=7d
@@ -160,7 +160,7 @@ CLOUDINARY_URL=cloudinary://...
 MAIL_HOST=smtp.example.com
 MAIL_USER=notifications@example.com
 MAIL_PASS=<smtp-password>
-STRIPE_SECRET_KEY=sk_live_...
+STRIPE_SECRET_KEY=<your-stripe-secret-key>
 GOOGLE_CLIENT_ID=<oauth-client-id>
 GOOGLE_CLIENT_SECRET=<oauth-secret>
 ```
