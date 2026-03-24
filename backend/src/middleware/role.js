@@ -1,10 +1,16 @@
+const logger = require("../utils/logger");
+
 const roleMiddleware = (roles) => {
   return (req, res, next) => {
-    console.log("DEBUG: Required Roles:", roles);
-    console.log("DEBUG: User Role:", req.user ? req.user.role : "No User");
-
     if (!req.user || !roles.includes(req.user.role)) {
-      console.log("DEBUG: Access Denied. User role:", req.user ? req.user.role : "undefined");
+      // Log internally for audit purposes without exposing to client
+      logger.warn({
+        action: "access_denied",
+        requiredRoles: roles,
+        userRole: req.user?.role,
+        userId: req.user?.id,
+        path: req.path,
+      });
       return res.status(403).json({ message: "Access denied: insufficient permissions" });
     }
     next();

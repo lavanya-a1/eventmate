@@ -2,7 +2,15 @@ const logger = require("../utils/logger");
 const multer = require("multer");
 
 const errorHandler = (err, req, res, next) => {
-  logger.error(err);
+  // Always log the full error internally for debugging
+  logger.error({
+    message: err.message,
+    stack: err.stack,
+    status: err.statusCode,
+    path: req.path,
+    method: req.method,
+    userId: req.user?.id,
+  });
 
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
@@ -14,13 +22,14 @@ const errorHandler = (err, req, res, next) => {
 
     return res.status(400).json({
       success: false,
-      message: err.message,
+      message: "File upload failed.",
     });
   }
 
+  // Always return a safe generic message to client
   res.status(err.statusCode || 500).json({
     success: false,
-    message: err.message || "Internal Server Error",
+    message: "An unexpected error occurred. Please try again later.",
   });
 };
 

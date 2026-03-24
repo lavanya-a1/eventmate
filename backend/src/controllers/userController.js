@@ -30,7 +30,8 @@ exports.getDashboardSummary = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        logger.error({ action: 'getDashboardSummary', error: error.message, userId: req.user.id });
+        res.status(500).json({ success: false, message: 'Failed to fetch dashboard data.' });
     }
 };
 
@@ -42,7 +43,8 @@ exports.getProfile = async (req, res) => {
 
         res.status(200).json({ success: true, data: user });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        logger.error({ action: 'getProfile', error: error.message, userId: req.user.id });
+        res.status(500).json({ success: false, message: 'Failed to fetch profile.' });
     }
 };
 
@@ -58,7 +60,8 @@ exports.updateProfile = async (req, res) => {
 
         res.status(200).json({ success: true, data: user });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        logger.error({ action: 'updateProfile', error: error.message, userId: req.user.id });
+        res.status(500).json({ success: false, message: 'Failed to update profile.' });
     }
 };
 
@@ -77,6 +80,7 @@ exports.changePassword = async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Password updated successfully' });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        logger.error({ action: 'changePassword', error: error.message, userId: req.user.id });
+        res.status(500).json({ success: false, message: 'Failed to update password.' });
     }
 };

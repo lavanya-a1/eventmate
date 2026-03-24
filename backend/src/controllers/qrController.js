@@ -28,6 +28,8 @@ exports.generateQRCode = async (req, res) => {
             data: qrCodeUrl
         });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        const logger = require('../utils/logger');
+        logger.error({ action: 'generateQR', error: error.message, userId: req.user.id });
+        res.status(500).json({ success: false, message: 'Failed to generate QR code.' });
     }
 };

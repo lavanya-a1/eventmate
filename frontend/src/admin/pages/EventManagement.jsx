@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Calendar, MapPin, Users, Upload, X, ImageIcon } from 'lucide-react';
+import { logError } from '../../utils/errorLogger';
 import DataTable from '../components/ui/DataTable';
 import Badge from '../components/ui/Badge';
 import Modal from '../components/ui/Modal';
@@ -34,7 +35,9 @@ function EventForm({ initial, onSave, onClose }) {
     setSaving(true);
     try {
       await onSave({ ...form, imageFile });
-    } catch (_) { /* handled by parent */ }
+    } catch (err) {
+      logError('EventForm.handleSubmit', err, { formTitle: form.title });
+    }
     setSaving(false);
   };
 
@@ -167,7 +170,8 @@ export default function EventManagement() {
         const res = await getAdminEvents();
         const list = res.data?.data || [];
         setEvents(list.map(mapEvent));
-      } catch (_) {
+      } catch (err) {
+        logError('EventManagement.load', err);
         toast.error('Failed to load events');
       }
       setLoading(false);
@@ -207,7 +211,8 @@ export default function EventManagement() {
         toast.success(res.data?.message || 'Event created successfully');
       }
       setModalOpen(false); setEditTarget(null);
-    } catch (_) {
+    } catch (err) {
+      logError('EventManagement.handleSave', err, { eventId: editTarget?._id });
       toast.error('Failed to save event');
     }
   };
@@ -217,7 +222,8 @@ export default function EventManagement() {
       await toggleEventStatus(event._id);
       setEvents(evs => evs.map(e => e._id === event._id ? { ...e, status: e.status === 'active' ? 'inactive' : 'active' } : e));
       toast.success(`Event ${event.status === 'active' ? 'deactivated' : 'activated'}`);
-    } catch (_) {
+    } catch (err) {
+      logError('EventManagement.handleToggle', err, { eventId: event._id });
       toast.error('Failed to toggle status');
     }
   };
@@ -227,7 +233,8 @@ export default function EventManagement() {
       await deleteEvent(event._id);
       setEvents(evs => evs.filter(e => e._id !== event._id));
       toast.success('Event deleted');
-    } catch (_) {
+    } catch (err) {
+      logError('EventManagement.handleDelete', err, { eventId: event._id });
       toast.error('Failed to delete event');
     }
     setDeleteTarget(null);

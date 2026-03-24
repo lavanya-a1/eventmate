@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { XCircle, Download, Calendar, User, MapPin, Hash } from 'lucide-react';
+import { logError } from '../../utils/errorLogger';
 import DataTable from '../components/ui/DataTable';
 import Badge from '../components/ui/Badge';
 import Modal from '../components/ui/Modal';
@@ -53,7 +54,8 @@ export default function BookingManagement() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'bookings.csv'; a.click();
       toast.success('Report exported');
-    } catch (_) {
+    } catch (err) {
+      logError('BookingManagement.exportBookings', err);
       // Fallback: generate CSV from current data
       const csv = ['ID,User,Email,Event,Date,Seats,Amount,Status,Payment',
         ...bookings.map(b => `${b._id},${b.user},${b.email},${b.event},${b.date},${b.seats},${b.amount},${b.status},${b.paymentMode}`)

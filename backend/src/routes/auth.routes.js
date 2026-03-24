@@ -42,7 +42,8 @@ router.get("/me", auth, async (req, res) => {
     }
     res.json({ success: true, data: user });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    logger.error({ action: 'auth/me', error: error.message, userId: req.user.id });
+    res.status(500).json({ success: false, message: 'Failed to fetch user data.' });
   }
 });
 

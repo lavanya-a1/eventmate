@@ -5,7 +5,8 @@ exports.getNotifications = async (req, res) => {
         const notifications = await Notification.find({ user: req.user.id }).sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: notifications });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        logger.error({ action: 'getNotifications', error: error.message, userId: req.user.id });
+        res.status(500).json({ success: false, message: 'Failed to fetch notifications.' });
     }
 };
 
@@ -21,7 +22,8 @@ exports.markAsRead = async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Marked as read' });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        logger.error({ action: 'markAsRead', error: error.message, userId: req.user.id });
+        res.status(500).json({ success: false, message: 'Failed to update notification.' });
     }
 };
 
@@ -33,6 +35,8 @@ exports.markAllAsRead = async (req, res) => {
         );
         res.status(200).json({ success: true, message: 'All notifications marked as read' });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        const logger = require('../utils/logger');
+        logger.error({ action: 'markAllAsRead', error: error.message, userId: req.user.id });
+        res.status(500).json({ success: false, message: 'Failed to update notifications.' });
     }
 };

@@ -122,6 +122,7 @@ exports.simulatePayment = async (req, res) => {
       data: payment,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    logger.error({ action: 'simulatePayment', error: error.message, userId: req.user.id, bookingId: req.body.bookingId });
+    res.status(500).json({ success: false, message: 'Payment processing failed. Please try again later.' });
   }
 };

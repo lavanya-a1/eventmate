@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const logger = require("../utils/logger");
 
 const protect = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -34,7 +35,8 @@ const protect = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
-    console.error("JWT ERROR:", err.message);
+    // Log the error internally without exposing details to client
+    logger.error({ message: "JWT verification failed", error: err.message, stack: err.stack });
     if (err.name === "TokenExpiredError") {
       return res.status(401).json({ message: "Token expired", code: "TOKEN_EXPIRED" });
     }

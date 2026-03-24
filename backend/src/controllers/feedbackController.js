@@ -24,7 +24,8 @@ exports.createFeedback = async (req, res) => {
 
         res.status(201).json({ success: true, data: feedback });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        logger.error({ action: 'submitFeedback', error: error.message, userId: req.user.id });
+        res.status(500).json({ success: false, message: 'Failed to submit feedback.' });
     }
 };
 
@@ -33,6 +34,8 @@ exports.getMyFeedback = async (req, res) => {
         const feedback = await Feedback.find({ user: req.user.id }).populate('event', 'title');
         res.status(200).json({ success: true, data: feedback });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        const logger = require('../utils/logger');
+        logger.error({ action: 'getMyFeedback', error: error.message, userId: req.user.id });
+        res.status(500).json({ success: false, message: 'Failed to fetch feedback.' });
     }
 };
