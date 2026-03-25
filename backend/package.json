@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "migrate:bookings": "node scripts/migrate-bookings.js"
+    "migrate:bookings": "node scripts/migrate-bookings.js",
+    "test": "jest --runInBand",
+    "test:smoke": "jest --runInBand tests/smoke"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -31,6 +33,14 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
+    "jest": "^30.0.5",
+    "supertest": "^7.1.3",
     "nodemon": "^3.1.11"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/tests/setupEnv.js"
+    ]
   }
 }

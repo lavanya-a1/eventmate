@@ -124,3 +124,7 @@
 {"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-03-03T11:05:00.021Z"}
 {"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-03-03T11:40:00.026Z"}
 {"level":"info","message":"[Cron] Checking for scheduled reminders...","timestamp":"2026-03-03T11:45:00.020Z"}
+{"level":"info","message":"[Secrets] SMTP credentials not set — email will use Ethereal test account","timestamp":"2026-03-25T18:43:40.408Z"}
+{"level":"info","message":"[Secrets] SMTP credentials not set — email will use Ethereal test account","timestamp":"2026-03-25T18:44:02.387Z"}
+{"level":"info","message":"[Secrets] SMTP credentials not set — email will use Ethereal test account","timestamp":"2026-03-25T18:46:35.094Z"}
+{"level":"info","message":"[Secrets] SMTP credentials not set — email will use Ethereal test account","timestamp":"2026-03-25T18:46:57.340Z"}

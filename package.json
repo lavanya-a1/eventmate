@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "test": "npm run test --prefix backend && npm run test --prefix frontend",
+    "test:smoke": "npm run test:smoke --prefix backend && npm run test:smoke --prefix frontend",
+    "quality:gate": "npm run test:smoke"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.3.1",
