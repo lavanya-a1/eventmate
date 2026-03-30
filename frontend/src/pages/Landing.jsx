@@ -29,7 +29,13 @@ const Landing = () => {
         const oauthError = searchParams.get('error');
 
         if (oauthError) {
-            setError(oauthError === 'account_blocked' ? 'Your account has been blocked.' : 'Google authentication failed. Please try again.');
+            const oauthErrorMessages = {
+                account_blocked: 'Your account has been blocked.',
+                google_not_configured: 'Google sign-in is not configured on the server yet. Please contact support or try email/password login.',
+                google_auth_failed: 'Google authentication failed. Please try again.'
+            };
+
+            setError(oauthErrorMessages[oauthError] || 'Google authentication failed. Please try again.');
             setSearchParams({}, { replace: true });
             return;
         }

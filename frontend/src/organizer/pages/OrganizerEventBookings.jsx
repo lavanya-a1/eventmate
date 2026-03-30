@@ -117,8 +117,6 @@ export default function OrganizerEventBookings() {
         </button>
       </div>
       <p className="text-sm text-gray-500 dark:text-slate-400 mt-0.5">View bookings for each of your events</p>
-      </div>
-
       {/* Event selector */}
       <div className="max-w-md">
         <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1.5">Select an event</label>
