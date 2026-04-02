@@ -7,8 +7,14 @@ const validate = require("../middleware/validate");
 const { setCsrfCookie } = require("../middleware/csrf");
 const authSchemas = require("../validations/auth.validation");
 const authController = require("../controllers/authController");
+const secrets = require("../config/secrets");
 
 const router = express.Router();
+
+const isGoogleOAuthConfigured =
+  Boolean(secrets.google.clientId) &&
+  Boolean(secrets.google.clientSecret) &&
+  Boolean(secrets.google.callbackUrl);
 
 // Stricter rate limits for auth endpoints to prevent brute-force / credential stuffing
 const authLimiter = rateLimit({
@@ -60,11 +66,23 @@ router.get("/csrf-token", (req, res) => {
 // ─── Google OAuth ──────────────────────────────────────────────────────────────
 router.get(
   "/google",
+  (req, res, next) => {
+    if (!isGoogleOAuthConfigured) {
+      return res.redirect(`${secrets.clientUrl}/?error=google_not_configured`);
+    }
+    return next();
+  },
   passport.authenticate("google", { scope: ["profile", "email"], session: false })
 );
 
 router.get(
   "/google/callback",
+  (req, res, next) => {
+    if (!isGoogleOAuthConfigured) {
+      return res.redirect(`${secrets.clientUrl}/?error=google_not_configured`);
+    }
+    return next();
+  },
   passport.authenticate("google", { session: false, failureRedirect: "/?error=google_auth_failed" }),
   authController.googleCallback
 );
